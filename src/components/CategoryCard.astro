@@ -178,20 +178,25 @@ const { category, index } = Astro.props;
     
     tabButtons.forEach(button => {
       button.addEventListener('click', () => {
-        const tabId = button.getAttribute('data-tab');
-        const categoryIndex = button.getAttribute('data-category');
-        const subIndex = button.getAttribute('data-subindex');
+        const tabId = button.getAttribute('data-tab') || '';
+        const categoryIndex = button.getAttribute('data-category') || '0';
+        const subIndex = button.getAttribute('data-subindex') || '0';
+        
+        if (!tabId) return;
+        
         const tabContent = document.getElementById(tabId);
         const parentCard = button.closest('.category-card');
         
         if (tabContent && parentCard) {
+            button.setAttribute('data-active', 'true');
+            
             parentCard.querySelectorAll('.tab-button').forEach(btn => {
                 btn.setAttribute('data-active', 'false');
             });
             
             parentCard.querySelectorAll('.tab-content').forEach((content: Element) => {
-                if ('style' in content) {
-                    (content as HTMLElement).style.display = 'none';
+                if (content instanceof HTMLElement) {
+                    content.style.display = 'none';
                 }
             });
             
@@ -200,7 +205,6 @@ const { category, index } = Astro.props;
             }
         }
 
-        // 更新左侧菜单的激活状态
         document.querySelectorAll('.subcategory-link').forEach(link => {
           const linkCategory = link.getAttribute('data-category');
           const linkTab = link.getAttribute('data-tab');
@@ -214,6 +218,5 @@ const { category, index } = Astro.props;
     });
   }
 
-  // 页面加载完成后设置tabs
   document.addEventListener('DOMContentLoaded', setupTabs);
 </script> 
