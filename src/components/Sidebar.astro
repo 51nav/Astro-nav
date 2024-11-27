@@ -204,44 +204,32 @@ function getItemCount(category) {
 </style>
 
 <script>
-  // 处理子菜单点击事件
-  document.querySelectorAll('.subcategory-link, .category-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const href = link.getAttribute('href');
+  function handleTabClick(event: Event) {
+    const link = event.target as HTMLAnchorElement;
+    const href = link.getAttribute('href');
+    
+    if (!href) return;
+    
+    event.preventDefault();
+    
+    try {
       const categoryId = href.split('#')[1];
+      if (!categoryId) return;
       
-      // 如果在详情页面，先跳转到首页
-      if (!window.location.pathname.endsWith('/')) {
+      const tabButton = document.querySelector(
+        `.category-card[id="${categoryId}"] .tab-button[data-active="true"]`
+      ) as HTMLElement;
+      
+      if (tabButton) {
+        tabButton.click?.();
         window.location.href = href;
-        return;
       }
-      
-      // 如果是子菜单链接，处理tab切换
-      if (link.classList.contains('subcategory-link')) {
-        const categoryIndex = link.getAttribute('data-category');
-        const tabIndex = link.getAttribute('data-tab');
-        const tabButton = document.querySelector(
-          `#category-${categoryIndex} .tab-button[data-tab="tab-${categoryIndex}-${tabIndex}"]`
-        );
-        tabButton?.click();
-      }
-
-      // 滚动到对应分类
-      document.getElementById(categoryId)?.scrollIntoView({ 
-        behavior: 'smooth' 
-      });
-    });
-  });
-
-  // 页面加载时检查是否需要激活特定tab
-  document.addEventListener('DOMContentLoaded', () => {
-    // 如果URL中包含hash，滚动到对应位置
-    if (window.location.hash) {
-      const element = document.querySelector(window.location.hash);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+    } catch (error) {
+      console.error('Error handling tab click:', error);
     }
+  }
+  
+  document.querySelectorAll('.subcategory-link').forEach(link => {
+    link.addEventListener('click', handleTabClick);
   });
 </script> 

@@ -103,7 +103,7 @@ const allCategories = navigationData.map(cat => {
 
           <div class="form-group">
             <label>公众号介绍</label>
-            <textarea rows="4" placeholder="请输入公众号介绍..."></textarea>
+            <textarea rows="4" placeholder="请输入公众号绍..."></textarea>
           </div>
 
           <button type="submit" class="submit-button">提交</button>
@@ -357,10 +357,12 @@ const allCategories = navigationData.map(cat => {
 
   // 处理文件上传预览
   document.querySelectorAll('input[type="file"]').forEach(input => {
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+    input.addEventListener('change', (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (!target || !target.files) return;
+      
+      const file = target.files[0];
       if (file) {
-        // 这里可以添加预览逻辑
         console.log('Selected file:', file.name);
       }
     });

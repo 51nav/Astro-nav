@@ -2,14 +2,21 @@
 import Layout from '../../layouts/Layout.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import QRCodeModal from '../../components/QRCodeModal.astro';
+import type { NavItem, Category } from '../../types/navigation';
 import { navigationData } from '../../data/navigation';
 
-// 添加 getStaticPaths 函数来生成所有可能的路径
-export function getStaticPaths() {
-  const paths = [];
+export async function getStaticPaths() {
+  const paths: Array<{
+    params: { slug: string };
+    props: {
+      currentItem: NavItem;
+      relatedItems: NavItem[];
+      category: string;
+      subCategory?: string;
+    };
+  }> = [];
   
-  // 遍历所有分类和子分类，收集所有项目
-  navigationData.forEach(category => {
+  navigationData.forEach((category: Category) => {
     if (category.items) {
       category.items.forEach(item => {
         paths.push({
@@ -17,7 +24,7 @@ export function getStaticPaths() {
             slug: item.title.toLowerCase().replace(/\s+/g, '-')
           },
           props: { 
-            item, 
+            currentItem: item, 
             relatedItems: category.items.filter(i => i.title !== item.title),
             category: category.name
           }
@@ -32,7 +39,7 @@ export function getStaticPaths() {
               slug: item.title.toLowerCase().replace(/\s+/g, '-')
             },
             props: { 
-              item, 
+              currentItem: item, 
               relatedItems: subCategory.items.filter(i => i.title !== item.title),
               category: category.name,
               subCategory: subCategory.name
@@ -46,8 +53,10 @@ export function getStaticPaths() {
   return paths;
 }
 
-// 使用传入的 props
-const { item: currentItem, relatedItems, category, subCategory } = Astro.props;
+const { currentItem, category, subCategory, relatedItems } = Astro.props;
+
+// 获取当前分类的索引
+const categoryIndex = navigationData.findIndex((cat: Category) => cat.name === category);
 ---
 
 <Layout title={`${currentItem.title} - Affiliate导航`}>
@@ -65,7 +74,7 @@ const { item: currentItem, relatedItems, category, subCategory } = Astro.props;
         <div class="breadcrumb">
           <a href="/">首页</a>
           <span>/</span>
-          <a href={`/#category-${navigationData.findIndex(cat => cat.name === category)}`}>
+          <a href={`/#category-${categoryIndex}`}>
             {category}
           </a>
           {subCategory && (
