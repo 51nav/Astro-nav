@@ -18,7 +18,7 @@ jobs:
       - name: Deploy to GitHub Pages repo
         uses: peaceiris/actions-gh-pages@v3
         with:
-          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          personal_token: ${{ secrets.GITHUB_TOKEN }}
           external_repository: 51nav/51nav.github.io
-          publish_branch: main  # 或者用 gh-pages 分支
+          publish_branch: main
           publish_dir: ./dist
