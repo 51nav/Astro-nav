@@ -1,0 +1,120 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import { navigationData } from '../data/navigation';
+---
+
+<Layout title="Affiliate导航">
+  <div class="layout">
+    <Sidebar />
+    <main>
+      <div class="top-nav">
+        <div class="nav-links">
+          <a href="/" class="nav-link active">首页</a>
+          <a href="/submit" class="nav-link">提交收录</a>
+        </div>
+      </div>
+      
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="搜索导航内容..." 
+          class="search-input"
+        />
+      </div>
+      
+      {navigationData.map((category, index) => (
+        <CategoryCard category={category} index={index} />
+      ))}
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  main {
+    flex: 1;
+    margin-left: 200px;
+    padding: 2rem 0.5rem 2rem 1rem;
+  }
+
+  .top-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 200px;
+    height: 60px;
+    background: white;
+    border-bottom: 1px solid #eaeaea;
+    z-index: 100;
+    padding: 0 1rem 0 1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .nav-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    transition: color 0.3s ease;
+    position: relative;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: #2937f0;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #2937f0;
+    border-radius: 2px;
+  }
+
+  .search-box {
+    margin: 5rem 0 2rem 0;
+    max-width: 600px;
+    text-align: left;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 2px solid #eaeaea;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+
+  .search-input:focus {
+    border-color: #2937f0;
+  }
+
+  @media (max-width: 768px) {
+    main {
+      margin-left: 0;
+      max-width: 100%;
+    }
+
+    .top-nav {
+      left: 0;
+    }
+  }
+</style> 

@@ -1,0 +1,52 @@
+---
+import Header from '../components/Header.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  </head>
+  <body>
+    <Header />
+    <div class="content">
+      <slot />
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --accent: #2937f0;
+    --accent-light: #4e5ff3;
+  }
+  
+  html {
+    font-family: system-ui, sans-serif;
+    background: #f6f6f6;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+
+  .content {
+    padding-top: 60px; /* Header 的高度 */
+    margin-left: 200px; /* 匹配新的侧边栏宽度 */
+  }
+</style> 

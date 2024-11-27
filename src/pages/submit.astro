@@ -1,0 +1,368 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import { navigationData } from '../data/navigation';
+
+// 获取所有分类选项
+const allCategories = navigationData.map(cat => {
+  if (cat.subCategories) {
+    return cat.subCategories.map(sub => ({
+      name: `${cat.name} - ${sub.name}`,
+      count: sub.items.length
+    }));
+  }
+  return [{
+    name: cat.name,
+    count: cat.items?.length || 0
+  }];
+}).flat();
+---
+
+<Layout title="收录提交 - Affiliate导航">
+  <div class="layout">
+    <Sidebar />
+    <main>
+      <div class="top-nav">
+        <div class="nav-links">
+          <a href="/" class="nav-link">首页</a>
+          <a href="/submit" class="nav-link active">提交收录</a>
+        </div>
+      </div>
+
+      <div class="submit-container">
+        <h1>Affiliate工具提交</h1>
+        
+        <div class="tabs">
+          <button class="tab-button active" data-tab="website">网站</button>
+          <button class="tab-button" data-tab="wechat">公众号</button>
+          <button class="tab-button" data-tab="resource">资源</button>
+        </div>
+
+        <div class="tab-content active" id="website-form">
+          <div class="form-group">
+            <label>网站图标</label>
+            <div class="upload-box">
+              <input type="file" accept="image/*" id="website-icon" hidden />
+              <label for="website-icon" class="upload-trigger">
+                <iconify-icon icon="mdi:cloud-upload" class="upload-icon"></iconify-icon>
+                <span>点击上传图标</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>选择分类 *</label>
+            <select required>
+              <option value="">请选择分类</option>
+              {allCategories.map(cat => (
+                <option value={cat.name}>{cat.name} ({cat.count})</option>
+              ))}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>网站介绍</label>
+            <textarea rows="4" placeholder="请输入网站介绍..."></textarea>
+          </div>
+
+          <button type="submit" class="submit-button">提交</button>
+        </div>
+
+        <div class="tab-content" id="wechat-form">
+          <div class="form-group">
+            <label>公众号图标</label>
+            <div class="upload-box">
+              <input type="file" accept="image/*" id="wechat-icon" hidden />
+              <label for="wechat-icon" class="upload-trigger">
+                <iconify-icon icon="mdi:cloud-upload" class="upload-icon"></iconify-icon>
+                <span>点击上传图标</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>选择分类 *</label>
+            <select required>
+              <option value="">请选择分类</option>
+              {allCategories.map(cat => (
+                <option value={cat.name}>{cat.name} ({cat.count})</option>
+              ))}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>公众号二维码</label>
+            <div class="upload-box">
+              <input type="file" accept="image/*" id="wechat-qr" hidden />
+              <label for="wechat-qr" class="upload-trigger">
+                <iconify-icon icon="mdi:cloud-upload" class="upload-icon"></iconify-icon>
+                <span>点击上传二维码</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>公众号介绍</label>
+            <textarea rows="4" placeholder="请输入公众号介绍..."></textarea>
+          </div>
+
+          <button type="submit" class="submit-button">提交</button>
+        </div>
+
+        <div class="tab-content" id="resource-form">
+          <div class="form-group">
+            <label>资源图标</label>
+            <div class="upload-box">
+              <input type="file" accept="image/*" id="resource-icon" hidden />
+              <label for="resource-icon" class="upload-trigger">
+                <iconify-icon icon="mdi:cloud-upload" class="upload-icon"></iconify-icon>
+                <span>点击上传图标</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>选择分类 *</label>
+            <select required>
+              <option value="">请选择分类</option>
+              {allCategories.map(cat => (
+                <option value={cat.name}>{cat.name} ({cat.count})</option>
+              ))}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>资源介绍(使用说明)</label>
+            <textarea rows="4" placeholder="请输入资源介绍..."></textarea>
+          </div>
+
+          <button type="submit" class="submit-button">提交</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  main {
+    flex: 1;
+    margin-left: 200px;
+    padding: 2rem 0.5rem 2rem 1rem;
+    width: calc(100% - 200px);
+  }
+
+  .top-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 200px;
+    height: 60px;
+    background: white;
+    border-bottom: 1px solid #eaeaea;
+    z-index: 100;
+    padding: 0 1rem 0 1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .nav-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    transition: color 0.3s ease;
+    position: relative;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: #2937f0;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #2937f0;
+    border-radius: 2px;
+  }
+
+  .submit-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin: 5rem 0 0 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  h1 {
+    color: #333;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 1rem;
+  }
+
+  .tab-button {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    color: #666;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .tab-button.active {
+    background: #2937f0;
+    color: white;
+  }
+
+  .tab-button:hover:not(.active) {
+    background: #f5f5f5;
+    color: #2937f0;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    display: block;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+
+  select:focus, textarea:focus {
+    border-color: #2937f0;
+  }
+
+  .upload-box {
+    border: 2px dashed #eaeaea;
+    border-radius: 6px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .upload-box:hover {
+    border-color: #2937f0;
+  }
+
+  .upload-trigger {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: #666;
+  }
+
+  .upload-icon {
+    font-size: 2rem;
+    color: #2937f0;
+  }
+
+  .submit-button {
+    background: #2937f0;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    width: 100%;
+  }
+
+  .submit-button:hover {
+    background: #4e5ff3;
+  }
+
+  @media (max-width: 768px) {
+    main {
+      margin-left: 0;
+      max-width: 100%;
+    }
+
+    .top-nav {
+      left: 0;
+    }
+  }
+</style>
+
+<script>
+  // 处理标签切换
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tabId = button.getAttribute('data-tab');
+      
+      // 更新按钮状态
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      
+      // 更新内容显示
+      tabContents.forEach(content => {
+        content.classList.remove('active');
+        if (content.id === `${tabId}-form`) {
+          content.classList.add('active');
+        }
+      });
+    });
+  });
+
+  // 处理文件上传预览
+  document.querySelectorAll('input[type="file"]').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // 这里可以添加预览逻辑
+        console.log('Selected file:', file.name);
+      }
+    });
+  });
+</script> 
