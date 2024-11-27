@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://51nav.github.io/sitemap.xml 
+# Sitemap
+Sitemap: https://51nav.github.io/sitemap-index.xml 

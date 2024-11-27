@@ -68,7 +68,11 @@ const { currentItem, category, subCategory, relatedItems } = Astro.props;
 const categoryIndex = navigationData.findIndex((cat: Category) => cat.name === category);
 ---
 
-<Layout title={`${currentItem.title} - Affiliate导航`}>
+<Layout 
+  title={`${currentItem.title} - Affiliate导航`}
+  description={currentItem.description}
+  type="article"
+>
   <div class="layout">
     <Sidebar />
     <main>
