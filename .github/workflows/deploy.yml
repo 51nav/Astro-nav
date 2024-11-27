@@ -14,6 +14,14 @@ jobs:
 
       - name: Install and Build
         uses: withastro/action@v3
+        with:
+          path: .
+          verbose: true
+
+      - name: List build output
+        run: |
+          echo "Contents of dist directory:"
+          ls -la dist/
 
       - name: Deploy to GitHub Pages repo
         uses: peaceiris/actions-gh-pages@v3
@@ -22,3 +30,8 @@ jobs:
           external_repository: 51nav/51nav.github.io
           publish_branch: main
           publish_dir: ./dist
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy to GitHub Pages'
+          full_commit_message: 'Deploy to GitHub Pages from ${{ github.sha }}'
