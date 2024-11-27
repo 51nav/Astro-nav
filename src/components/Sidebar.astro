@@ -214,15 +214,33 @@ function getItemCount(category) {
     
     try {
       const categoryId = href.split('#')[1];
-      if (!categoryId) return;
+      const categoryIndex = link.getAttribute('data-category');
+      const tabIndex = link.getAttribute('data-tab');
       
+      if (!categoryId || !categoryIndex || !tabIndex) return;
+      
+      // 找到对应的标签按钮并点击
       const tabButton = document.querySelector(
-        `.category-card[id="${categoryId}"] .tab-button[data-active="true"]`
+        `#category-${categoryIndex} .tab-button[data-tab="tab-${categoryIndex}-${tabIndex}"]`
       ) as HTMLElement;
       
       if (tabButton) {
-        tabButton.click?.();
-        window.location.href = href;
+        // 更新所有子菜单的激活状态
+        document.querySelectorAll('.subcategory-link').forEach(link => {
+          link.classList.remove('active');
+        });
+        
+        // 设置当前子菜单为激活状态
+        link.classList.add('active');
+        
+        // 点击对应的标签按钮
+        tabButton.click();
+        
+        // 滚动到对应的分类
+        const categoryElement = document.getElementById(categoryId);
+        if (categoryElement) {
+          categoryElement.scrollIntoView({ behavior: 'smooth' });
+        }
       }
     } catch (error) {
       console.error('Error handling tab click:', error);
