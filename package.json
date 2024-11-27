@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
-    "astro": "^4.16.13",
+    "astro": "^4.16.15",
     "qrcode": "^1.5.4",
     "typescript": "^5.7.2"
+  },
+  "devDependencies": {
+    "@astrojs/ts-plugin": "^1.10.4"
   }
 }

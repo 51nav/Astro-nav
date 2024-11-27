@@ -184,17 +184,21 @@ const { category, index } = Astro.props;
         const tabContent = document.getElementById(tabId);
         const parentCard = button.closest('.category-card');
         
-        // 更新按钮状态
-        parentCard.querySelectorAll('.tab-button').forEach(btn => {
-          btn.setAttribute('data-active', 'false');
-        });
-        button.setAttribute('data-active', 'true');
-        
-        // 更新内容显示
-        parentCard.querySelectorAll('.tab-content').forEach(content => {
-          content.style.display = 'none';
-        });
-        tabContent.style.display = 'grid';
+        if (tabContent && parentCard) {
+            parentCard.querySelectorAll('.tab-button').forEach(btn => {
+                btn.setAttribute('data-active', 'false');
+            });
+            
+            parentCard.querySelectorAll('.tab-content').forEach((content: Element) => {
+                if ('style' in content) {
+                    (content as HTMLElement).style.display = 'none';
+                }
+            });
+            
+            if (tabContent instanceof HTMLElement) {
+                tabContent.style.display = 'grid';
+            }
+        }
 
         // 更新左侧菜单的激活状态
         document.querySelectorAll('.subcategory-link').forEach(link => {
