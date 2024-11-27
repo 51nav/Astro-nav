@@ -17,35 +17,44 @@ export async function getStaticPaths() {
   }> = [];
   
   navigationData.forEach((category: Category) => {
-    if (category.items) {
-      category.items.forEach(item => {
+    const { items, subCategories } = category;
+    
+    // 处理主分类的项目
+    if (items && items.length > 0) {
+      // 在这个作用域内，items 已确定存在
+      items.forEach(item => {
         paths.push({
           params: { 
             slug: item.title.toLowerCase().replace(/\s+/g, '-')
           },
           props: { 
             currentItem: item, 
-            relatedItems: category.items.filter(i => i.title !== item.title),
+            relatedItems: items.filter(i => i.title !== item.title),
             category: category.name
           }
         });
       });
     }
-    if (category.subCategories) {
-      category.subCategories.forEach(subCategory => {
-        subCategory.items.forEach(item => {
-          paths.push({
-            params: { 
-              slug: item.title.toLowerCase().replace(/\s+/g, '-')
-            },
-            props: { 
-              currentItem: item, 
-              relatedItems: subCategory.items.filter(i => i.title !== item.title),
-              category: category.name,
-              subCategory: subCategory.name
-            }
+    
+    // 处理子分类的项目
+    if (subCategories) {
+      subCategories.forEach(subCategory => {
+        const { items: subItems } = subCategory;
+        if (subItems && subItems.length > 0) {
+          subItems.forEach(item => {
+            paths.push({
+              params: { 
+                slug: item.title.toLowerCase().replace(/\s+/g, '-')
+              },
+              props: { 
+                currentItem: item, 
+                relatedItems: subItems.filter(i => i.title !== item.title),
+                category: category.name,
+                subCategory: subCategory.name
+              }
+            });
           });
-        });
+        }
       });
     }
   });
