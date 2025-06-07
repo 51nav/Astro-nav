@@ -178,6 +178,7 @@ export interface ConfigLoadResult {
   error?: string;
   isOptimized: boolean;
   loadTime: number;            // 加载时间 (毫秒)
+  detection?: ConfigDetectionResult; // 检测结果
 }
 
 /**
@@ -223,12 +224,18 @@ export interface LoadEvent {
 // ============ 工具类型 ============
 
 /**
+ * 配置格式类型
+ */
+export type ConfigFormat = 'traditional' | 'optimized' | 'unknown';
+
+/**
  * 配置检测结果
  */
 export interface ConfigDetectionResult {
   isOptimized: boolean;
   hasOptimizationField: boolean;
   hasCategoryIndexes: boolean;
+  hasPreviewSites?: boolean;
   estimatedCategories: number;
   confidence: number;          // 检测置信度 (0-1)
 }
