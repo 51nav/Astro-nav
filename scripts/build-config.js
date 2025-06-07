@@ -38,24 +38,14 @@ function readCSV(filePath) {
 }
 
 /**
- * 读取网站基本信息
+ * 获取网站基本信息
+ * 直接返回配置，无需额外文件
  */
-function readSiteInfo() {
-  const siteInfoPath = path.join(srcDataDir, 'site-info.json');
-  
-  if (fs.existsSync(siteInfoPath)) {
-    try {
-      return JSON.parse(fs.readFileSync(siteInfoPath, 'utf8'));
-    } catch (error) {
-      console.warn('⚠️ site-info.json 解析失败，使用默认值');
-    }
-  }
-  
-  // 默认网站信息
+function getSiteInfo() {
   return {
-    title: "导航网站",
-    description: "专业的导航平台",
-    logoText: "Nav"
+    title: "Affiliate导航",
+    description: "专业的Affiliate营销导航网站",
+    logoText: "Affiliate导航"
   };
 }
 
@@ -66,8 +56,9 @@ function transformMenuData(menuRows) {
   return menuRows.map(row => ({
     menuId: row.menuId || row['菜单ID'] || '',
     menuName: row.menuName || row['菜单名称'] || '',
-    parentMenuId: row.parentMenuId || row['父菜单ID'] || '',
     menuIcon: row.menuIcon || row['菜单图标'] || 'mdi:folder',
+    menuType: row.menuType || row['菜单类型'] || 'single',
+    parentMenuId: row.parentMenuId || row['父菜单ID'] || '',
     sortOrder: parseInt(row.sortOrder || row['排序'] || '0')
   }));
 }
@@ -162,7 +153,7 @@ async function generateOptimizedConfig() {
     console.log('📖 读取CSV文件...');
     const menuRows = readCSV(menuPath);
     const siteRows = readCSV(sitesPath);
-    const siteInfo = readSiteInfo();
+    const siteInfo = getSiteInfo();
     
     console.log(`   - 菜单数据: ${menuRows.length} 条`);
     console.log(`   - 网站数据: ${siteRows.length} 条`);
@@ -246,7 +237,6 @@ function checkCSVFiles() {
       console.log('📋 请创建以下CSV文件:');
       console.log('   - src/data/menu.csv (菜单配置)');
       console.log('   - src/data/sites.csv (网站数据)');
-      console.log('   - src/data/site-info.json (可选，网站基本信息)');
       return false;
     }
   }
