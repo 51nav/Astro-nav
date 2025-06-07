@@ -1,0 +1,688 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="表格导入工具 - 从Excel/CSV生成配置文件"
+  description="支持从Excel或CSV表格导入数据，自动生成导航网站配置文件"
+>
+  <div class="import-container">
+    <header class="import-header">
+      <h1>📊 表格导入工具</h1>
+      <p>从Excel或CSV表格导入数据，自动生成导航网站配置文件</p>
+    </header>
+
+    <div class="import-steps">
+      <div class="step" data-step="1">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>下载模板</h3>
+          <p>下载标准的表格模板文件</p>
+          <div class="template-downloads">
+            <a href="/templates/menu-template.csv" download class="download-btn">
+              📋 菜单模板 (CSV)
+            </a>
+            <a href="/templates/site-template.csv" download class="download-btn">
+              🌐 网站模板 (CSV)
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>填写数据</h3>
+          <p>按照模板格式填写您的导航数据</p>
+          <div class="format-info">
+            <div class="info-item">
+              <strong>菜单表格：</strong>定义左侧导航结构
+            </div>
+            <div class="info-item">
+              <strong>网站表格：</strong>填充右侧网站内容
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>上传文件</h3>
+          <p>上传填写好的表格文件进行解析</p>
+          
+          <div class="upload-section">
+            <div class="upload-group">
+              <label for="menu-file">📋 菜单表格文件</label>
+              <input 
+                type="file" 
+                id="menu-file" 
+                accept=".csv,.xlsx"
+                class="file-input"
+              />
+              <div class="file-info" id="menu-file-info"></div>
+            </div>
+
+            <div class="upload-group">
+              <label for="site-file">🌐 网站表格文件</label>
+              <input 
+                type="file" 
+                id="site-file" 
+                accept=".csv,.xlsx"
+                class="file-input"
+              />
+              <div class="file-info" id="site-file-info"></div>
+            </div>
+          </div>
+
+          <button id="parse-btn" class="parse-btn" disabled>
+            🔄 解析表格数据
+          </button>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>网站信息</h3>
+          <p>配置您的网站基本信息</p>
+          
+          <div class="site-config">
+            <div class="config-group">
+              <label for="site-title">网站标题</label>
+              <input 
+                type="text" 
+                id="site-title" 
+                placeholder="我的导航网站"
+                value="Affiliate导航"
+              />
+            </div>
+            
+            <div class="config-group">
+              <label for="site-description">网站描述</label>
+              <input 
+                type="text" 
+                id="site-description" 
+                placeholder="专业的导航平台"
+                value="专业的Affiliate营销导航网站"
+              />
+            </div>
+            
+            <div class="config-group">
+              <label for="site-logo">Logo文字</label>
+              <input 
+                type="text" 
+                id="site-logo" 
+                placeholder="MyNav"
+                value="Affiliate导航"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" data-step="5">
+        <div class="step-number">5</div>
+        <div class="step-content">
+          <h3>生成配置</h3>
+          <p>生成最终的配置文件</p>
+          
+          <button id="generate-btn" class="generate-btn" disabled>
+            🚀 生成配置文件
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-section" id="result-section" style="display: none;">
+      <h2>📋 解析结果</h2>
+      <div id="result-content"></div>
+    </div>
+
+    <div class="preview-section" id="preview-section" style="display: none;">
+      <h2>👀 配置预览</h2>
+      <div class="preview-actions">
+        <button id="download-config-btn" class="download-btn">
+          💾 下载配置文件
+        </button>
+        <button id="copy-config-btn" class="copy-btn">
+          📋 复制配置
+        </button>
+      </div>
+      <pre id="config-preview"></pre>
+    </div>
+
+    <div class="help-section">
+      <h2>📚 使用说明</h2>
+      <div class="help-content">
+        <div class="help-item">
+          <h4>📋 菜单表格格式</h4>
+          <p>定义左侧导航菜单的层级结构，支持单级和多级菜单。</p>
+          <ul>
+            <li><code>menuId</code>: 菜单唯一标识</li>
+            <li><code>menuName</code>: 菜单显示名称</li>
+            <li><code>menuIcon</code>: 菜单图标 (mdi:前缀)</li>
+            <li><code>menuType</code>: single 或 tabs</li>
+            <li><code>parentMenuId</code>: 父菜单ID (子菜单用)</li>
+            <li><code>sortOrder</code>: 排序顺序</li>
+          </ul>
+        </div>
+        
+        <div class="help-item">
+          <h4>🌐 网站表格格式</h4>
+          <p>填充各个菜单下的具体网站数据。</p>
+          <ul>
+            <li><code>menuId</code>: 所属菜单ID</li>
+            <li><code>title</code>: 网站标题</li>
+            <li><code>description</code>: 简短描述</li>
+            <li><code>advantages</code>: 优势特点 (分号分隔)</li>
+            <li><code>pros/cons</code>: 优缺点 (分号分隔)</li>
+            <li><code>tips</code>: 使用技巧 (分号分隔)</li>
+          </ul>
+        </div>
+        
+        <div class="help-item">
+          <h4>⚠️ 注意事项</h4>
+          <ul>
+            <li>CSV文件请使用UTF-8编码</li>
+            <li>多个值用英文分号 <code>;</code> 分隔</li>
+            <li>menuId必须在两个表格中保持一致</li>
+            <li>父菜单必须在子菜单之前定义</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .import-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .import-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .import-header h1 {
+    font-size: 2.5rem;
+    color: #2937f0;
+    margin-bottom: 1rem;
+  }
+
+  .import-header p {
+    font-size: 1.2rem;
+    color: #666;
+  }
+
+  .import-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .step {
+    display: flex;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #e0e0e0;
+    transition: all 0.3s ease;
+  }
+
+  .step.active {
+    border-left-color: #2937f0;
+    box-shadow: 0 4px 20px rgba(41, 55, 240, 0.1);
+  }
+
+  .step-number {
+    width: 40px;
+    height: 40px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #666;
+    flex-shrink: 0;
+  }
+
+  .step.active .step-number {
+    background: #2937f0;
+    color: white;
+  }
+
+  .step-content {
+    flex: 1;
+  }
+
+  .step-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+  }
+
+  .step-content p {
+    margin: 0 0 1rem 0;
+    color: #666;
+  }
+
+  .template-downloads {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .download-btn, .parse-btn, .generate-btn, .copy-btn {
+    padding: 0.75rem 1.5rem;
+    background: #2937f0;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .download-btn:hover, .parse-btn:hover, .generate-btn:hover, .copy-btn:hover {
+    background: #1e2ad8;
+    transform: translateY(-2px);
+  }
+
+  .parse-btn:disabled, .generate-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .format-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .info-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .upload-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .upload-group label {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .file-input {
+    padding: 0.75rem;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .file-input:hover {
+    border-color: #2937f0;
+    background: #f0f2ff;
+  }
+
+  .file-info {
+    font-size: 0.85rem;
+    color: #666;
+    min-height: 1.2rem;
+  }
+
+  .site-config {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .config-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .config-group label {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .config-group input {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  .config-group input:focus {
+    outline: none;
+    border-color: #2937f0;
+    box-shadow: 0 0 0 3px rgba(41, 55, 240, 0.1);
+  }
+
+  .result-section, .preview-section {
+    margin: 2rem 0;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .preview-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  #config-preview {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .help-section {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+  }
+
+  .help-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .help-item h4 {
+    color: #2937f0;
+    margin-bottom: 0.5rem;
+  }
+
+  .help-item ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .help-item li {
+    margin-bottom: 0.25rem;
+  }
+
+  .help-item code {
+    background: #e9ecef;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 768px) {
+    .import-container {
+      padding: 1rem;
+    }
+    
+    .step {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .template-downloads {
+      flex-direction: column;
+    }
+    
+    .help-content {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // 导入表格解析功能
+  import { 
+    parseMenuExcelFile, 
+    parseMenuCSVFile,
+    parseSiteExcelFile,
+    parseSiteCSVFile,
+    generateConfig
+  } from '../utils/tableImport';
+  
+  // 全局变量
+  let menuData: any[] = [];
+  let siteData: any[] = [];
+  let currentStep = 1;
+  
+  // DOM元素
+  const menuFileInput = document.getElementById('menu-file') as HTMLInputElement;
+  const siteFileInput = document.getElementById('site-file') as HTMLInputElement;
+  const parseBtn = document.getElementById('parse-btn') as HTMLButtonElement;
+  const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+  const resultSection = document.getElementById('result-section') as HTMLElement;
+  const previewSection = document.getElementById('preview-section') as HTMLElement;
+  
+  // 更新步骤状态
+  function updateStep(step: number) {
+    currentStep = step;
+    document.querySelectorAll('.step').forEach((el, index) => {
+      if (index + 1 <= step) {
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+      }
+    });
+  }
+  
+  // 文件选择处理
+  menuFileInput.addEventListener('change', handleMenuFileSelect);
+  siteFileInput.addEventListener('change', handleSiteFileSelect);
+  
+  function handleMenuFileSelect(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    const infoEl = document.getElementById('menu-file-info');
+    
+    if (file && infoEl) {
+      infoEl.textContent = `已选择: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      checkFilesReady();
+    }
+  }
+  
+  function handleSiteFileSelect(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    const infoEl = document.getElementById('site-file-info');
+    
+    if (file && infoEl) {
+      infoEl.textContent = `已选择: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      checkFilesReady();
+    }
+  }
+  
+  function checkFilesReady() {
+    const menuFile = menuFileInput.files?.[0];
+    const siteFile = siteFileInput.files?.[0];
+    
+    if (menuFile && siteFile) {
+      parseBtn.disabled = false;
+      updateStep(3);
+    }
+  }
+  
+  // 解析按钮处理
+  parseBtn.addEventListener('click', async () => {
+    const menuFile = menuFileInput.files?.[0];
+    const siteFile = siteFileInput.files?.[0];
+    
+    if (!menuFile || !siteFile) return;
+    
+    parseBtn.textContent = '🔄 解析中...';
+    parseBtn.disabled = true;
+    
+    try {
+      // 解析菜单文件
+      const menuResult = await parseFile(menuFile, 'menu');
+      if (!menuResult.success) {
+        throw new Error(`菜单文件解析失败: ${menuResult.error}`);
+      }
+      menuData = menuResult.data || [];
+      
+      // 解析网站文件
+      const siteResult = await parseFile(siteFile, 'site');
+      if (!siteResult.success) {
+        throw new Error(`网站文件解析失败: ${siteResult.error}`);
+      }
+      siteData = siteResult.data || [];
+      
+      // 显示解析结果
+      showParseResult(menuResult, siteResult);
+      updateStep(4);
+      generateBtn.disabled = false;
+      
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '解析失败');
+    } finally {
+      parseBtn.textContent = '🔄 解析表格数据';
+      parseBtn.disabled = false;
+    }
+  });
+  
+  async function parseFile(file: File, type: 'menu' | 'site') {
+    const isExcel = file.name.endsWith('.xlsx');
+    
+    if (type === 'menu') {
+      return isExcel ? parseMenuExcelFile(file) : parseMenuCSVFile(file);
+    } else {
+      return isExcel ? parseSiteExcelFile(file) : parseSiteCSVFile(file);
+    }
+  }
+  
+  function showParseResult(menuResult: any, siteResult: any) {
+    const resultContent = document.getElementById('result-content');
+    if (!resultContent) return;
+    
+    resultContent.innerHTML = `
+      <div class="parse-success">
+        <h3>✅ 解析成功</h3>
+        <div class="result-stats">
+          <div class="stat-item">
+            <strong>菜单数据:</strong> ${menuResult.rowCount} 条记录
+          </div>
+          <div class="stat-item">
+            <strong>网站数据:</strong> ${siteResult.rowCount} 条记录
+          </div>
+        </div>
+      </div>
+    `;
+    
+    resultSection.style.display = 'block';
+  }
+  
+  function showError(message: string) {
+    const resultContent = document.getElementById('result-content');
+    if (!resultContent) return;
+    
+    resultContent.innerHTML = `
+      <div class="parse-error">
+        <h3>❌ 解析失败</h3>
+        <p>${message}</p>
+      </div>
+    `;
+    
+    resultSection.style.display = 'block';
+  }
+  
+  // 生成配置按钮处理
+  generateBtn.addEventListener('click', () => {
+    const siteTitle = (document.getElementById('site-title') as HTMLInputElement).value;
+    const siteDescription = (document.getElementById('site-description') as HTMLInputElement).value;
+    const siteLogo = (document.getElementById('site-logo') as HTMLInputElement).value;
+    
+    try {
+      const config = generateConfig(menuData, siteData, {
+        title: siteTitle,
+        description: siteDescription,
+        logoText: siteLogo
+      });
+      
+      showConfigPreview(config);
+      updateStep(5);
+      
+    } catch (error) {
+      showError(`配置生成失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  });
+  
+  function showConfigPreview(config: any) {
+    const configPreview = document.getElementById('config-preview');
+    if (!configPreview) return;
+    
+    configPreview.textContent = JSON.stringify(config, null, 2);
+    previewSection.style.display = 'block';
+    
+    // 设置下载和复制按钮
+    setupPreviewActions(config);
+  }
+  
+  function setupPreviewActions(config: any) {
+    const downloadBtn = document.getElementById('download-config-btn');
+    const copyBtn = document.getElementById('copy-config-btn');
+    
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'config.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+    
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+          copyBtn.textContent = '✅ 已复制';
+          setTimeout(() => {
+            copyBtn.textContent = '📋 复制配置';
+          }, 2000);
+        } catch (error) {
+          console.error('复制失败:', error);
+        }
+      });
+    }
+  }
+  
+  // 初始化
+  updateStep(1);
+</script>
+</Layout>

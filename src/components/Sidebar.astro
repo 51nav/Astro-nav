@@ -1,5 +1,10 @@
 ---
-import { navigationData } from '../data/navigation';
+import { getMenuItems } from '../utils/config';
+import { convertMenuItemToCategory } from '../utils/dataConverter';
+
+// 获取配置数据并转换为旧格式以保持兼容性
+const menuItems = getMenuItems();
+const navigationData = menuItems.map(convertMenuItemToCategory);
 
 // 辅助函数：计算项目总数
 function getItemCount(category) {

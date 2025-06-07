@@ -1,0 +1,11 @@
+menuId,menuName,menuIcon,menuType,parentMenuId,sortOrder
+tracking,追踪系统,mdi:chart-line,single,,1
+spy,SPY服务,mdi:eye,single,,2
+traffic,流量平台,mdi:traffic-light,tabs,,3
+traffic-pop,PoP流量,mdi:popup,single,traffic,1
+traffic-native,原生广告流量,mdi:newspaper,single,traffic,2
+traffic-push,Push流量,mdi:bell,single,traffic,3
+traffic-social,社交流量,mdi:account-group,single,traffic,4
+traffic-search,搜索流量,mdi:magnify,single,traffic,5
+traffic-adult,Adult流量,mdi:alert-circle,single,traffic,6
+networks,综合性联盟,mdi:handshake,single,,4

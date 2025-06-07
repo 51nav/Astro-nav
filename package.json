@@ -13,11 +13,14 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/sitemap": "^3.2.1",
     "astro": "^4.16.15",
+    "papaparse": "^5.5.3",
     "qrcode": "^1.5.4",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.4",
+    "@types/papaparse": "^5.3.16",
     "@types/qrcode": "^1.5.5"
   }
 }

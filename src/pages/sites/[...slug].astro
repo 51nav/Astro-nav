@@ -3,9 +3,18 @@ import Layout from '../../layouts/Layout.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import QRCodeModal from '../../components/QRCodeModal.astro';
 import type { NavItem, Category } from '../../types/navigation';
-import { navigationData } from '../../data/navigation';
+import { getMenuItems } from '../../utils/config';
+import { convertMenuItemToCategory } from '../../utils/dataConverter';
+
+// 获取配置数据并转换为旧格式以保持兼容性
+const menuItems = getMenuItems();
+const navigationData = menuItems.map(convertMenuItemToCategory);
 
 export async function getStaticPaths() {
+  // 在函数内部获取配置数据
+  const menuItems = getMenuItems();
+  const navigationData = menuItems.map(convertMenuItemToCategory);
+
   const paths: Array<{
     params: { slug: string };
     props: {
@@ -15,7 +24,7 @@ export async function getStaticPaths() {
       subCategory?: string;
     };
   }> = [];
-  
+
   navigationData.forEach((category: Category) => {
     const { items, subCategories } = category;
     
