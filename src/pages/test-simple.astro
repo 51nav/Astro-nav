@@ -1,0 +1,105 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="简单API测试">
+  <div style="max-width: 600px; margin: 2rem auto; padding: 2rem;">
+    <h1>API连接测试</h1>
+    
+    <div style="margin-bottom: 2rem;">
+      <button id="testGet" style="background: #28a745; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; margin-right: 1rem;">
+        测试 GET 请求
+      </button>
+      
+      <button id="testPost" style="background: #007bff; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+        测试 POST 请求
+      </button>
+    </div>
+    
+    <div id="result" style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 4px; display: none;">
+      <h3>测试结果:</h3>
+      <pre id="resultContent" style="background: white; padding: 1rem; border-radius: 4px; overflow: auto; white-space: pre-wrap;"></pre>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const testGet = document.getElementById('testGet') as HTMLButtonElement;
+  const testPost = document.getElementById('testPost') as HTMLButtonElement;
+  const result = document.getElementById('result') as HTMLElement;
+  const resultContent = document.getElementById('resultContent') as HTMLElement;
+  
+  function showResult(data: any, isError = false) {
+    result.style.display = 'block';
+    resultContent.style.color = isError ? 'red' : 'green';
+    resultContent.textContent = JSON.stringify(data, null, 2);
+  }
+  
+  testGet.addEventListener('click', async () => {
+    try {
+      console.log('Testing GET request...');
+      
+      const response = await fetch('/api/test-simple', {
+        method: 'GET'
+      });
+      
+      console.log('GET Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('GET Response data:', data);
+        showResult(data);
+      } else {
+        const errorText = await response.text();
+        console.error('GET Error response:', errorText);
+        showResult({ error: `HTTP ${response.status}: ${errorText}` }, true);
+      }
+      
+    } catch (error) {
+      console.error('GET Request error:', error);
+      showResult({ 
+        error: 'Network Error', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        type: 'GET Request Failed'
+      }, true);
+    }
+  });
+  
+  testPost.addEventListener('click', async () => {
+    try {
+      console.log('Testing POST request...');
+      
+      const response = await fetch('/api/test-simple', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          test: 'data',
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      console.log('POST Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('POST Response data:', data);
+        showResult(data);
+      } else {
+        const errorText = await response.text();
+        console.error('POST Error response:', errorText);
+        showResult({ error: `HTTP ${response.status}: ${errorText}` }, true);
+      }
+      
+    } catch (error) {
+      console.error('POST Request error:', error);
+      showResult({ 
+        error: 'Network Error', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        type: 'POST Request Failed'
+      }, true);
+    }
+  });
+</script>
+</Layout>

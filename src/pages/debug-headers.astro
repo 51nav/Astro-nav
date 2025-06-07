@@ -1,0 +1,182 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Headers调试">
+  <div style="max-width: 800px; margin: 2rem auto; padding: 2rem;">
+    <h1>🔍 Headers调试工具</h1>
+    
+    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+      <h3>测试不同的请求方式</h3>
+      <p>这个工具会显示服务器接收到的所有headers信息</p>
+    </div>
+    
+    <!-- 测试1: 简单POST -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6;">
+      <h4>测试1: 简单JSON POST</h4>
+      <button id="testJson" style="background: #007bff; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+        发送JSON请求
+      </button>
+    </div>
+    
+    <!-- 测试2: FormData (JavaScript) -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6;">
+      <h4>测试2: JavaScript FormData</h4>
+      <input type="file" id="jsFile" accept=".csv,.txt" style="margin-bottom: 0.5rem;">
+      <br>
+      <button id="testJsFormData" style="background: #28a745; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+        发送JS FormData
+      </button>
+    </div>
+    
+    <!-- 测试3: HTML表单提交 -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6;">
+      <h4>测试3: HTML表单提交</h4>
+      <form action="/api/debug-headers" method="post" enctype="multipart/form-data">
+        <input type="file" name="htmlFile" accept=".csv,.txt" style="margin-bottom: 0.5rem;">
+        <br>
+        <input type="text" name="testField" value="HTML Form Test" style="margin-bottom: 0.5rem; padding: 0.25rem;">
+        <br>
+        <button type="submit" style="background: #dc3545; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+          提交HTML表单
+        </button>
+      </form>
+    </div>
+    
+    <!-- 测试4: Fetch with explicit headers -->
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6;">
+      <h4>测试4: 手动设置Headers</h4>
+      <input type="file" id="manualFile" accept=".csv,.txt" style="margin-bottom: 0.5rem;">
+      <br>
+      <button id="testManualHeaders" style="background: #6f42c1; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+        手动设置Content-Type
+      </button>
+    </div>
+    
+    <div id="result" style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 4px; display: none;">
+      <h3>调试结果:</h3>
+      <pre id="resultContent" style="background: white; padding: 1rem; border-radius: 4px; overflow: auto; white-space: pre-wrap; max-height: 500px;"></pre>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const result = document.getElementById('result') as HTMLElement;
+  const resultContent = document.getElementById('resultContent') as HTMLElement;
+  
+  function showResult(data: any, title: string) {
+    result.style.display = 'block';
+    resultContent.textContent = `=== ${title} ===\n\n${JSON.stringify(data, null, 2)}`;
+    result.scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  // 测试1: JSON POST
+  document.getElementById('testJson')?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/api/debug-headers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ test: 'json data' })
+      });
+      
+      const data = await response.json();
+      showResult(data, 'JSON POST 测试');
+    } catch (error) {
+      showResult({ error: error instanceof Error ? error.message : 'Unknown error' }, 'JSON POST 错误');
+    }
+  });
+  
+  // 测试2: JavaScript FormData
+  document.getElementById('testJsFormData')?.addEventListener('click', async () => {
+    const fileInput = document.getElementById('jsFile') as HTMLInputElement;
+    const file = fileInput.files?.[0];
+    
+    if (!file) {
+      alert('请先选择一个文件');
+      return;
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append('testFile', file);
+      formData.append('testField', 'JavaScript FormData Test');
+      
+      console.log('Sending FormData with file:', file.name, file.type, file.size);
+      
+      const response = await fetch('/api/debug-headers', {
+        method: 'POST',
+        body: formData
+        // 不设置Content-Type，让浏览器自动设置
+      });
+      
+      const data = await response.json();
+      showResult(data, 'JavaScript FormData 测试');
+    } catch (error) {
+      showResult({ error: error instanceof Error ? error.message : 'Unknown error' }, 'JavaScript FormData 错误');
+    }
+  });
+  
+  // 测试4: 手动设置Headers
+  document.getElementById('testManualHeaders')?.addEventListener('click', async () => {
+    const fileInput = document.getElementById('manualFile') as HTMLInputElement;
+    const file = fileInput.files?.[0];
+    
+    if (!file) {
+      alert('请先选择一个文件');
+      return;
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append('testFile', file);
+      formData.append('testField', 'Manual Headers Test');
+      
+      // 尝试手动设置Content-Type (通常不推荐，但用于测试)
+      const response = await fetch('/api/debug-headers', {
+        method: 'POST',
+        headers: {
+          // 注意：手动设置multipart/form-data通常会出问题，因为缺少boundary
+          // 'Content-Type': 'multipart/form-data'
+        },
+        body: formData
+      });
+      
+      const data = await response.json();
+      showResult(data, '手动Headers 测试');
+    } catch (error) {
+      showResult({ error: error instanceof Error ? error.message : 'Unknown error' }, '手动Headers 错误');
+    }
+  });
+  
+  // 创建测试文件的辅助函数
+  function createTestFile() {
+    const content = 'test,data\n1,hello\n2,world';
+    const blob = new Blob([content], { type: 'text/csv' });
+    return new File([blob], 'test.csv', { type: 'text/csv' });
+  }
+  
+  // 为没有文件的测试自动创建文件
+  document.getElementById('testJsFormData')?.addEventListener('click', () => {
+    const fileInput = document.getElementById('jsFile') as HTMLInputElement;
+    if (!fileInput.files?.length) {
+      // 创建一个虚拟文件用于测试
+      const testFile = createTestFile();
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      fileInput.files = dataTransfer.files;
+    }
+  });
+  
+  document.getElementById('testManualHeaders')?.addEventListener('click', () => {
+    const fileInput = document.getElementById('manualFile') as HTMLInputElement;
+    if (!fileInput.files?.length) {
+      const testFile = createTestFile();
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      fileInput.files = dataTransfer.files;
+    }
+  });
+</script>
+</Layout>

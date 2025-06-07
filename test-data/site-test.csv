@@ -1,0 +1,10 @@
+menuId,title,description,url,advantages,pros,cons,tips
+tools,VS Code,强大的代码编辑器,https://code.visualstudio.com,免费;插件丰富;跨平台,启动快;功能强大,内存占用大,安装必要插件;定制主题
+tools,WebStorm,JetBrains的专业IDE,https://www.jetbrains.com/webstorm,智能提示;调试强大,功能全面;稳定性好,价格较贵;启动慢,购买学生版;配置代码风格
+tools,Sublime Text,轻量级文本编辑器,https://www.sublimetext.com,启动快;界面简洁,性能优秀;插件丰富,功能相对简单,安装Package Control;选择合适主题
+design-ui,Figma,在线协作设计工具,https://www.figma.com,在线协作;免费版本,实时协作;跨平台,需要网络;功能限制,团队协作;组件复用
+design-ui,Sketch,Mac专业设计工具,https://www.sketch.com,专业设计;插件丰富,设计专业;生态完善,仅支持Mac;订阅制,学习设计规范;使用插件
+design-icon,Iconify,海量图标库,https://iconify.design,图标丰富;免费使用,数量庞大;格式多样,搜索困难,使用关键词;收藏常用
+design-icon,Feather Icons,简洁线性图标,https://feathericons.com,风格统一;开源免费,简洁美观;易于使用,数量有限,适合简约设计;保持一致性
+marketing,Google Analytics,网站分析工具,https://analytics.google.com,功能强大;免费使用,数据详细;报告丰富,学习成本高,设置目标;定期查看
+marketing,Mailchimp,邮件营销平台,https://mailchimp.com,易于使用;模板丰富,自动化强;集成方便,免费版限制,细分用户;A/B测试

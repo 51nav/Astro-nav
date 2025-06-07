@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="上传测试">
+  <div style="max-width: 600px; margin: 2rem auto; padding: 2rem;">
+    <h1>文件上传测试</h1>
+    
+    <form id="testForm" enctype="multipart/form-data" style="background: #f5f5f5; padding: 2rem; border-radius: 8px;">
+      <div style="margin-bottom: 1rem;">
+        <label for="testFile">选择文件:</label>
+        <input type="file" id="testFile" name="testFile" accept=".csv,.xlsx" required>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label for="testText">测试文本:</label>
+        <input type="text" id="testText" name="testText" value="Hello World" required>
+      </div>
+      
+      <button type="submit" style="background: #007bff; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+        测试上传
+      </button>
+    </form>
+    
+    <div id="result" style="margin-top: 2rem; padding: 1rem; background: #e9ecef; border-radius: 4px; display: none;">
+      <h3>测试结果:</h3>
+      <pre id="resultContent" style="background: white; padding: 1rem; border-radius: 4px; overflow: auto;"></pre>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('testForm') as HTMLFormElement;
+  const result = document.getElementById('result') as HTMLElement;
+  const resultContent = document.getElementById('resultContent') as HTMLElement;
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    console.log('=== Client Debug ===');
+    
+    const formData = new FormData(form);
+    
+    // 打印FormData内容
+    console.log('FormData entries:');
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, {
+          name: value.name,
+          size: value.size,
+          type: value.type
+        });
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+    
+    try {
+      console.log('Sending request...');
+      
+      const response = await fetch('/api/test-upload', {
+        method: 'POST',
+        body: formData
+        // 注意：不要手动设置Content-Type，让浏览器自动设置
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      const data = await response.json();
+      console.log('Response data:', data);
+      
+      // 显示结果
+      result.style.display = 'block';
+      resultContent.textContent = JSON.stringify(data, null, 2);
+      
+      if (!response.ok) {
+        resultContent.style.color = 'red';
+      } else {
+        resultContent.style.color = 'green';
+      }
+      
+    } catch (error) {
+      console.error('Request error:', error);
+      
+      result.style.display = 'block';
+      resultContent.style.color = 'red';
+      resultContent.textContent = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
+  });
+</script>
+</Layout>
