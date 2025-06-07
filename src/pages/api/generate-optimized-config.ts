@@ -8,7 +8,8 @@ import { splitConfig } from '../../utils/configSplitter';
 import type {
   OptimizationOptions,
   ConfigResult,
-  OptimizedConfigResult
+  OptimizedConfigResult,
+  TraditionalConfigResult
 } from '../../types/optimization';
 import type { MenuTableRow, SiteTableRow, TableImportResult } from '../../types/tableImport';
 
@@ -190,10 +191,11 @@ export const POST: APIRoute = async ({ request }) => {
       });
     } else {
       // 生成传统版本 - JSON文件
-      const configJson = JSON.stringify(result.config, null, 2);
+      const traditionalResult = result as TraditionalConfigResult;
+      const configJson = JSON.stringify(traditionalResult.config, null, 2);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `config-${timestamp}.json`;
-      
+
       return new Response(configJson, {
         headers: {
           'Content-Type': 'application/json',
