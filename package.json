@@ -3,12 +3,14 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "npm run copy-config && astro dev",
+    "dev": "npm run build-config && astro dev",
     "dev:watch": "npm run copy-config:watch & astro dev",
-    "start": "npm run copy-config && astro dev",
-    "build": "npm run copy-config && astro build",
+    "start": "npm run build-config && astro dev",
+    "build": "npm run build-config && astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "build-config": "node scripts/build-config.js",
+    "prepare-config": "node scripts/prepare-config.js",
     "copy-config": "node scripts/copy-config.js",
     "copy-config:watch": "node scripts/copy-config.js --watch"
   },
