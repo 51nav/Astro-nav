@@ -1,0 +1,438 @@
+---
+/**
+ * 分类懒加载组件
+ * Week 2: 前端懒加载机制实现
+ */
+
+import type { UnifiedMenuItem } from '../types/lazyLoading';
+
+interface Props {
+  menuItem: UnifiedMenuItem;
+  isActive?: boolean;
+  showPreview?: boolean;
+  className?: string;
+}
+
+const { menuItem, isActive = false, showPreview = true, className = '' } = Astro.props;
+
+// 生成唯一ID
+const componentId = `category-loader-${menuItem.categoryIndex || Math.random().toString(36).substr(2, 9)}`;
+---
+
+<div 
+  class={`category-loader ${className}`}
+  data-category-index={menuItem.categoryIndex}
+  data-component-id={componentId}
+  data-is-lazy={menuItem.isLazyLoaded}
+>
+  <!-- 预览内容 (始终显示) -->
+  {showPreview && menuItem.previewSites && menuItem.previewSites.length > 0 && (
+    <div class="preview-content">
+      <div class="preview-header">
+        <h3 class="preview-title">
+          <i class={`icon ${menuItem.icon}`}></i>
+          {menuItem.name}
+          {menuItem.siteCount && (
+            <span class="site-count">({menuItem.siteCount} 个网站)</span>
+          )}
+        </h3>
+        {menuItem.isLazyLoaded && (
+          <button 
+            class="load-more-btn"
+            data-action="load-category"
+            data-category-index={menuItem.categoryIndex}
+          >
+            <span class="btn-text">查看全部</span>
+            <span class="btn-loading">加载中...</span>
+            <i class="icon-arrow-right"></i>
+          </button>
+        )}
+      </div>
+      
+      <div class="preview-sites">
+        {menuItem.previewSites.map((site) => (
+          <div class="site-card preview">
+            <div class="site-header">
+              <h4 class="site-title">{site.title}</h4>
+              {site.url && (
+                <a href={site.url} target="_blank" rel="noopener noreferrer" class="site-link">
+                  <i class="icon-external-link"></i>
+                </a>
+              )}
+            </div>
+            <p class="site-description">{site.description}</p>
+            {site.advantages && site.advantages.length > 0 && (
+              <div class="site-tags">
+                {site.advantages.slice(0, 3).map((tag) => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      {menuItem.isLazyLoaded && menuItem.siteCount && menuItem.previewSites.length < menuItem.siteCount && (
+        <div class="preview-footer">
+          <p class="more-sites-hint">
+            还有 {menuItem.siteCount - menuItem.previewSites.length} 个网站...
+          </p>
+        </div>
+      )}
+    </div>
+  )}
+
+  <!-- 懒加载内容容器 -->
+  {menuItem.isLazyLoaded && (
+    <div class="lazy-content" style="display: none;">
+      <!-- 加载状态 -->
+      <div class="loading-state">
+        <div class="loading-skeleton">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-grid">
+            {Array.from({ length: 6 }).map(() => (
+              <div class="skeleton-card">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-description"></div>
+                <div class="skeleton-tags">
+                  <div class="skeleton-tag"></div>
+                  <div class="skeleton-tag"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      <!-- 实际内容容器 -->
+      <div class="loaded-content" style="display: none;">
+        <!-- 内容将通过JavaScript动态插入 -->
+      </div>
+      
+      <!-- 错误状态 -->
+      <div class="error-state" style="display: none;">
+        <div class="error-message">
+          <i class="icon-alert-circle"></i>
+          <h4>加载失败</h4>
+          <p class="error-text">网络连接出现问题，请稍后重试</p>
+          <button class="retry-btn" data-action="retry-load" data-category-index={menuItem.categoryIndex}>
+            <i class="icon-refresh"></i>
+            重试
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- 传统内容 (非懒加载) -->
+  {!menuItem.isLazyLoaded && menuItem.sites && (
+    <div class="traditional-content">
+      <div class="sites-grid">
+        {menuItem.sites.map((site) => (
+          <div class="site-card">
+            <div class="site-header">
+              <h4 class="site-title">{site.title}</h4>
+              {site.url && (
+                <a href={site.url} target="_blank" rel="noopener noreferrer" class="site-link">
+                  <i class="icon-external-link"></i>
+                </a>
+              )}
+            </div>
+            <p class="site-description">{site.description}</p>
+            {site.advantages && site.advantages.length > 0 && (
+              <div class="site-tags">
+                {site.advantages.map((tag) => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </div>
+            )}
+            {site.details && (
+              <div class="site-details">
+                {site.details.pricing && (
+                  <span class="pricing">{site.details.pricing}</span>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .category-loader {
+    margin-bottom: 2rem;
+  }
+
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .preview-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+
+  .site-count {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 400;
+  }
+
+  .load-more-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+  }
+
+  .load-more-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+  }
+
+  .load-more-btn.loading .btn-text {
+    display: none;
+  }
+
+  .load-more-btn:not(.loading) .btn-loading {
+    display: none;
+  }
+
+  .preview-sites,
+  .sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .site-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .site-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #3b82f6;
+  }
+
+  .site-card.preview {
+    border-left: 4px solid #fbbf24;
+  }
+
+  .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .site-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    flex: 1;
+  }
+
+  .site-link {
+    color: #6b7280;
+    text-decoration: none;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: color 0.2s;
+  }
+
+  .site-link:hover {
+    color: #3b82f6;
+  }
+
+  .site-description {
+    color: #4b5563;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
+  .site-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .preview-footer {
+    text-align: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .more-sites-hint {
+    color: #6b7280;
+    font-style: italic;
+    margin: 0;
+  }
+
+  /* 加载状态样式 */
+  .loading-skeleton {
+    animation: pulse 2s infinite;
+  }
+
+  .skeleton-header {
+    height: 2rem;
+    background: #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    width: 60%;
+  }
+
+  .skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .skeleton-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+
+  .skeleton-title {
+    height: 1.5rem;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    margin-bottom: 0.75rem;
+    width: 80%;
+  }
+
+  .skeleton-description {
+    height: 3rem;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .skeleton-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .skeleton-tag {
+    height: 1.5rem;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    width: 4rem;
+  }
+
+  /* 错误状态样式 */
+  .error-state {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  .error-message {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .error-message i {
+    font-size: 3rem;
+    color: #ef4444;
+    margin-bottom: 1rem;
+  }
+
+  .error-message h4 {
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .error-text {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+  }
+
+  .retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .retry-btn:hover {
+    background: #dc2626;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .preview-sites,
+    .sites-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .preview-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .load-more-btn {
+      align-self: stretch;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  // 懒加载功能将在下一个文件中实现
+  console.log('CategoryLoader component loaded');
+</script>
