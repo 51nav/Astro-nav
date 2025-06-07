@@ -55,12 +55,6 @@ function generateBaseConfig(
   const topMenus = sortedMenus.filter(menu => !menu.parentMenuId);
   const subMenus = sortedMenus.filter(menu => menu.parentMenuId);
   
-  // 生成categoryMap
-  const categoryMap: Record<string, string> = {};
-  topMenus.forEach(menu => {
-    categoryMap[menu.menuName] = menu.menuId;
-  });
-  
   let categoryIndex = 0;
   
   // 生成menuItems
@@ -119,14 +113,14 @@ function generateBaseConfig(
         href: "/"
       }
     },
-    categoryMap,
     menuItems,
     optimization: {
       enabled: true,
-      version: "1.0",
       totalCategories: categoryIndex,
       totalSites: siteData.length,
-      generatedAt: new Date().toISOString()
+      previewCount: options.previewCount,
+      fileSizeKB: 0, // 将在后面计算
+      compressionRatio: 0 // 将在后面计算
     }
   };
 }
@@ -293,10 +287,9 @@ function calculateOptimizationStats(
   siteData: SiteTableRow[]
 ): OptimizedConfigResult['optimization'] {
   
-  // 计算原始大小（模拟完整配置）
+  // 计算原始大小（模拟传统完整配置）
   const originalConfig = {
     site: baseConfig.site,
-    categoryMap: baseConfig.categoryMap,
     menuItems: baseConfig.menuItems.map(item => ({
       ...item,
       sites: [] // 这里应该包含完整的网站数据

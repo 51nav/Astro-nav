@@ -43,14 +43,14 @@ export interface OptimizedBaseConfig {
       href: string;
     };
   };
-  categoryMap: Record<string, string>;
   menuItems: OptimizedMenuItem[];
   optimization: {
     enabled: true;
-    version: string;
     totalCategories: number;
     totalSites: number;
-    generatedAt: string;
+    previewCount: number;
+    fileSizeKB: number;
+    compressionRatio: number;
   };
 }
 
