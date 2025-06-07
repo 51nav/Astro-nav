@@ -4,6 +4,13 @@ import Papa from 'papaparse';
 import JSZip from 'jszip';
 import busboy from 'busboy';
 import { Readable } from 'stream';
+import { splitConfig } from '../../utils/configSplitter';
+import type {
+  OptimizationOptions,
+  ConfigResult,
+  OptimizedConfigResult
+} from '../../types/optimization';
+import type { MenuTableRow, SiteTableRow, TableImportResult } from '../../types/tableImport';
 
 // 强制此API路由为服务器端渲染
 export const prerender = false;
@@ -521,17 +528,18 @@ async function generateConfig(
   siteInfo: { title: string; description: string; logoText: string },
   options: OptimizationOptions
 ): Promise<ConfigResult> {
-  
+
   if (options.enabled) {
     // 生成优化版本
-    return splitConfig(menuData, siteData, siteInfo, options);
+    const optimizedResult = splitConfig(menuData, siteData, siteInfo, options);
+    return optimizedResult as ConfigResult;
   } else {
     // 生成传统版本
     const config = generateTraditionalConfig(menuData, siteData, siteInfo);
     return {
       config,
       optimization: { enabled: false }
-    };
+    } as ConfigResult;
   }
 }
 
@@ -670,24 +678,27 @@ async function createOptimizedZip(result: ConfigResult): Promise<Blob> {
   if (result.optimization.enabled === false) {
     throw new Error('不是优化版本的配置');
   }
-  
+
+  // 类型断言为优化配置结果
+  const optimizedResult = result as OptimizedConfigResult;
+
   const zip = new JSZip();
-  
-  // 添加基础配置文件
-  zip.file('config.json', JSON.stringify(result.baseConfig, null, 2));
-  
+
+  // 添加基础配置文件 (新格式)
+  zip.file('config.json', JSON.stringify(optimizedResult.baseConfig, null, 2));
+
   // 添加分类文件
   const categoriesFolder = zip.folder('categories');
   if (categoriesFolder) {
-    result.categoryFiles.forEach(file => {
+    optimizedResult.categoryFiles.forEach(file => {
       categoriesFolder.file(file.filename, JSON.stringify(file.content, null, 2));
     });
   }
-  
+
   // 添加说明文档
   const readme = generateReadme(result);
   zip.file('README.md', readme);
-  
+
   return await zip.generateAsync({ type: 'blob' });
 }
 
@@ -698,38 +709,68 @@ function generateReadme(result: ConfigResult): string {
   if (result.optimization.enabled === false) {
     return '# 传统配置文件\n\n直接将 config.json 放到项目的 src/data/ 目录下即可。';
   }
-  
+
+  // 类型断言为优化配置结果
+  const optimizedResult = result as OptimizedConfigResult;
+
   return `# 优化版本配置文件
 
-## 部署说明
+## 🚀 部署说明
 
-1. 将 \`config.json\` 放到项目的 \`src/data/\` 目录下
-2. 将 \`categories/\` 文件夹放到项目的 \`public/data/\` 目录下
+1. 将 \`config.json\` 放到项目的 \`public/\` 目录下
+2. 将 \`categories/\` 文件夹放到项目的 \`public/\` 目录下
 3. 重新构建和部署项目
 
-## 优化效果
+## 📊 优化效果
 
-- 总分类数: ${result.optimization.totalCategories}
-- 总网站数: ${result.optimization.totalSites}
-- 原始大小: ${result.optimization.originalSizeKB}KB
-- 优化后大小: ${result.optimization.optimizedSizeKB}KB
-- 压缩比例: ${result.optimization.compressionRatio}%
+- 总分类数: ${optimizedResult.optimization.totalCategories}
+- 总网站数: ${optimizedResult.optimization.totalSites}
+- 原始大小: ${optimizedResult.optimization.originalSizeKB}KB
+- 优化后大小: ${optimizedResult.optimization.optimizedSizeKB}KB
+- 压缩比例: ${optimizedResult.optimization.compressionRatio}%
 
-## 文件结构
+## 📁 文件结构
 
 \`\`\`
-src/data/config.json          # 基础配置文件
-public/data/categories/       # 分类数据文件夹
-├── 0.json                   # 第1个分类数据
-├── 1.json                   # 第2个分类数据
-└── ...
+public/
+├── config.json              # 基础配置文件 (新格式)
+└── categories/              # 分类数据文件夹
+    ├── 0.json              # 第1个分类数据
+    ├── 1.json              # 第2个分类数据
+    └── ...
 \`\`\`
 
-## 注意事项
+## 🔧 配置格式说明
 
-- 确保前端项目支持懒加载功能
-- 分类数据文件会在用户点击时动态加载
-- 建议启用CDN加速分类文件的加载速度
+### 基础配置文件 (config.json)
+包含网站基本信息和菜单结构，每个菜单项包含：
+- \`categoryIndex\`: 对应的分类文件索引
+- \`siteCount\`: 该分类的网站总数
+- \`previewSites\`: 前几个网站的预览数据
+
+### 分类文件 (categories/*.json)
+包含完整的网站数据，按需加载。
+
+## ⚡ 性能优化原理
+
+1. **首次加载**: 只加载基础配置和预览数据
+2. **按需加载**: 用户点击分类时才加载完整数据
+3. **缓存机制**: 已加载的分类数据会被缓存
+4. **预加载**: 智能预加载下一个可能访问的分类
+
+## 🔄 前端适配
+
+确保前端项目支持懒加载功能：
+- 检测配置格式 (传统 vs 优化)
+- 实现分类数据懒加载
+- 添加loading状态和错误处理
+- 启用缓存和预加载机制
+
+## 📈 建议
+
+- 启用CDN加速分类文件的加载速度
+- 监控分类文件的加载性能
+- 根据用户行为调整预加载策略
 `;
 }
 

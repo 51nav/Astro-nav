@@ -51,6 +51,20 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <div class="content">
       <slot />
     </div>
+
+    <!-- 懒加载脚本 -->
+    <script>
+      // 检查是否支持ES模块
+      if ('noModule' in HTMLScriptElement.prototype) {
+        // 现代浏览器，加载ES模块版本
+        import('/src/scripts/lazyLoader.ts').catch(error => {
+          console.warn('懒加载模块加载失败:', error);
+        });
+      } else {
+        // 旧浏览器降级处理
+        console.warn('浏览器不支持ES模块，懒加载功能可能受限');
+      }
+    </script>
   </body>
 </html>
 
