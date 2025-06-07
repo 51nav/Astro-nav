@@ -4,7 +4,7 @@ interface Props {
   url: string;
 }
 
-const { title, url } = Astro.props;
+const { title } = Astro.props;
 ---
 
 <div class="qr-modal" id="qrModal">
@@ -80,26 +80,32 @@ const { title, url } = Astro.props;
           const centerSize = size * 0.25; // logo 大小为二维码的 25%
           const centerPos = (size - centerSize) / 2;
 
-          // 绘制白色背景
-          ctx.fillStyle = '#FFFFFF';
-          ctx.beginPath();
-          ctx.roundRect(centerPos - 4, centerPos - 4, centerSize + 8, centerSize + 8, 8);
-          ctx.fill();
-
-          // 创建并绘制 logo
-          const logo = new Image();
-          logo.onload = () => {
-            ctx.save();
+          if (ctx) {
+            // 绘制白色背景
+            ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
-            ctx.roundRect(centerPos, centerPos, centerSize, centerSize, 6);
-            ctx.clip();
-            ctx.drawImage(logo, centerPos, centerPos, centerSize, centerSize);
-            ctx.restore();
-          };
-          logo.src = 'https://www.google.com/s2/favicons?domain=' + new URL(siteUrl).hostname + '&sz=128';
+            ctx.roundRect(centerPos - 4, centerPos - 4, centerSize + 8, centerSize + 8, 8);
+            ctx.fill();
+
+            // 创建并绘制 logo
+            const logo = new Image();
+            logo.onload = () => {
+              if (ctx) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(centerPos, centerPos, centerSize, centerSize, 6);
+                ctx.clip();
+                ctx.drawImage(logo, centerPos, centerPos, centerSize, centerSize);
+                ctx.restore();
+              }
+            };
+            logo.src = 'https://www.google.com/s2/favicons?domain=' + new URL(siteUrl).hostname + '&sz=128';
+          }
 
           qrContainer.appendChild(canvas);
-          modal.style.display = 'flex';
+          if (modal) {
+            modal.style.display = 'flex';
+          }
         } catch (error) {
           console.error('Failed to generate QR code:', error);
         }

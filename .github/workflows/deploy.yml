@@ -16,9 +16,6 @@ jobs:
 
       - name: Install and Build
         uses: withastro/action@v3
-        with:
-          path: .
-          verbose: true
 
       - name: Debug Build Output
         run: |
