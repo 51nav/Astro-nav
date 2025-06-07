@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npm run copy-config && astro dev",
     "dev:watch": "npm run copy-config:watch & astro dev",
-    "start": "astro dev",
+    "start": "npm run copy-config && astro dev",
     "build": "npm run copy-config && astro build",
     "preview": "astro preview",
     "astro": "astro",

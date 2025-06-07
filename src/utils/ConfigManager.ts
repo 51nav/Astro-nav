@@ -48,15 +48,9 @@ export class ConfigManager {
    * 智能检测配置文件路径
    */
   private detectConfigPath(): string {
-    // 开发环境优先级：public/ > src/data/
-    const paths = [
-      '/config.json',           // public/config.json (懒加载友好)
-      '/src/data/config.json'   // src/data/config.json (构建时)
-    ];
-
-    // 在实际使用中，我们会先尝试public/路径
-    // 如果失败，ConfigManager会自动处理错误
-    return paths[0];
+    // 开发和生产环境都使用相同路径
+    // static/ 文件夹在开发时存在，构建后会复制到 dist/
+    return '/config.json';  // 对应 static/config.json
   }
 
   /**
