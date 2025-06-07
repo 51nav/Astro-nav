@@ -10,18 +10,28 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="test-controls">
-      <button id="loadConfigBtn" class="test-btn primary">
-        🔄 加载配置
-      </button>
-      <button id="reloadConfigBtn" class="test-btn">
-        🔁 重新加载
-      </button>
-      <button id="showStatsBtn" class="test-btn">
-        📊 显示统计
-      </button>
-      <button id="clearResultsBtn" class="test-btn secondary">
-        🗑️ 清空结果
-      </button>
+      <div class="config-selector">
+        <label for="configPath">选择配置文件:</label>
+        <select id="configPath" class="config-select">
+          <option value="/config.json">传统格式 (config.json)</option>
+          <option value="/config-optimized.json">优化格式 (config-optimized.json)</option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button id="loadConfigBtn" class="test-btn primary">
+          🔄 加载配置
+        </button>
+        <button id="reloadConfigBtn" class="test-btn">
+          🔁 重新加载
+        </button>
+        <button id="showStatsBtn" class="test-btn">
+          📊 显示统计
+        </button>
+        <button id="clearResultsBtn" class="test-btn secondary">
+          🗑️ 清空结果
+        </button>
+      </div>
     </div>
 
     <div class="test-results">

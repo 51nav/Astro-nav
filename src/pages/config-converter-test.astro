@@ -1,0 +1,745 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="配置转换工具测试" description="测试传统配置到优化配置的转换功能">
+  <div class="converter-container">
+    <div class="converter-header">
+      <h1>🔄 配置转换工具</h1>
+      <p>将传统配置格式转换为优化格式，并生成完整的分类文件</p>
+    </div>
+
+    <div class="converter-controls">
+      <div class="input-section">
+        <h3>📥 输入配置</h3>
+        <div class="input-group">
+          <label for="inputPath">传统配置文件路径:</label>
+          <select id="inputPath" class="path-select">
+            <option value="/config.json">传统格式 (config.json)</option>
+          </select>
+        </div>
+        
+        <div class="options-group">
+          <h4>转换选项</h4>
+          <div class="option-item">
+            <label for="previewCount">预览网站数量:</label>
+            <input type="number" id="previewCount" value="3" min="1" max="10">
+          </div>
+          <div class="option-item">
+            <label for="chunkSizeLimit">分类文件大小限制 (KB):</label>
+            <input type="number" id="chunkSizeLimit" value="100" min="50" max="500">
+          </div>
+          <div class="option-item">
+            <label for="enablePreload">启用智能预加载:</label>
+            <input type="checkbox" id="enablePreload" checked>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="convertBtn" class="convert-btn primary">
+          🚀 开始转换
+        </button>
+        <button id="downloadBtn" class="convert-btn secondary" disabled>
+          📥 下载优化配置
+        </button>
+        <button id="clearBtn" class="convert-btn">
+          🗑️ 清空结果
+        </button>
+      </div>
+    </div>
+
+    <div class="converter-results">
+      <div class="result-section">
+        <h3>📊 转换结果</h3>
+        <div id="conversionResult" class="result-content">
+          <p class="placeholder">点击"开始转换"查看结果...</p>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <h3>📋 转换报告</h3>
+        <div id="conversionReport" class="result-content">
+          <p class="placeholder">等待转换报告...</p>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <h3>📁 生成的文件</h3>
+        <div id="generatedFiles" class="result-content">
+          <p class="placeholder">等待文件生成...</p>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <h3>🔍 配置预览</h3>
+        <div id="configPreview" class="result-content">
+          <p class="placeholder">等待配置预览...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="converter-info">
+      <h3>ℹ️ 转换说明</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <h4>🎯 转换目标</h4>
+          <ul>
+            <li>将传统单文件配置拆分为多个文件</li>
+            <li>生成基础配置文件 (config.json)</li>
+            <li>生成分类数据文件 (categories/*.json)</li>
+            <li>优化首次加载性能</li>
+          </ul>
+        </div>
+        <div class="info-item">
+          <h4>📈 性能优化</h4>
+          <ul>
+            <li>减少首次加载数据量 60-80%</li>
+            <li>支持按需加载分类数据</li>
+            <li>提供预览数据快速展示</li>
+            <li>支持缓存和预加载策略</li>
+          </ul>
+        </div>
+        <div class="info-item">
+          <h4>📁 文件结构</h4>
+          <ul>
+            <li>config.json - 基础配置和预览数据</li>
+            <li>categories/0.json - 第1个分类数据</li>
+            <li>categories/1.json - 第2个分类数据</li>
+            <li>... 更多分类文件</li>
+          </ul>
+        </div>
+        <div class="info-item">
+          <h4>🚀 部署方式</h4>
+          <ul>
+            <li>将config.json放到public/目录</li>
+            <li>将categories/文件夹放到public/目录</li>
+            <li>确保前端支持懒加载功能</li>
+            <li>配置CDN加速访问</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { ConfigConverter, convertConfigFile, generateReport } from '../utils/ConfigConverter';
+  import JSZip from 'jszip';
+
+  // 获取DOM元素
+  const inputPath = document.getElementById('inputPath') as HTMLSelectElement;
+  const previewCount = document.getElementById('previewCount') as HTMLInputElement;
+  const chunkSizeLimit = document.getElementById('chunkSizeLimit') as HTMLInputElement;
+  const enablePreload = document.getElementById('enablePreload') as HTMLInputElement;
+
+  const convertBtn = document.getElementById('convertBtn') as HTMLButtonElement;
+  const downloadBtn = document.getElementById('downloadBtn') as HTMLButtonElement;
+  const clearBtn = document.getElementById('clearBtn') as HTMLButtonElement;
+
+  const conversionResult = document.getElementById('conversionResult') as HTMLElement;
+  const conversionReport = document.getElementById('conversionReport') as HTMLElement;
+  const generatedFiles = document.getElementById('generatedFiles') as HTMLElement;
+  const configPreview = document.getElementById('configPreview') as HTMLElement;
+
+  let convertedResult: any = null;
+
+  // 转换配置
+  convertBtn.addEventListener('click', async () => {
+    convertBtn.disabled = true;
+    convertBtn.textContent = '⏳ 转换中...';
+    
+    try {
+      const options = {
+        previewCount: parseInt(previewCount.value) || 3,
+        chunkSizeLimit: parseInt(chunkSizeLimit.value) || 100,
+        enablePreload: enablePreload.checked
+      };
+
+      console.log('🔄 开始转换配置...', { inputPath: inputPath.value, options });
+      
+      const result = await convertConfigFile(inputPath.value, options);
+      convertedResult = result;
+      
+      // 显示转换结果
+      displayConversionResult(result);
+      
+      // 显示转换报告
+      displayConversionReport(result);
+      
+      // 显示生成的文件
+      displayGeneratedFiles(result);
+      
+      // 显示配置预览
+      displayConfigPreview(result);
+      
+      // 启用下载按钮
+      downloadBtn.disabled = false;
+      
+    } catch (error) {
+      conversionResult.innerHTML = `
+        <div class="result-item error">
+          <h4>❌ 转换失败</h4>
+          <p class="error">${error instanceof Error ? error.message : '未知错误'}</p>
+        </div>
+      `;
+    } finally {
+      convertBtn.disabled = false;
+      convertBtn.textContent = '🚀 开始转换';
+    }
+  });
+
+  // 下载优化配置
+  downloadBtn.addEventListener('click', async () => {
+    if (!convertedResult) return;
+    
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = '⏳ 生成中...';
+    
+    try {
+      const zip = new JSZip();
+      
+      // 添加基础配置文件
+      zip.file('config.json', JSON.stringify(convertedResult.baseConfig, null, 2));
+      
+      // 添加分类文件
+      const categoriesFolder = zip.folder('categories');
+      if (categoriesFolder) {
+        convertedResult.categoryFiles.forEach((file: any) => {
+          categoriesFolder.file(file.filename, JSON.stringify(file.content, null, 2));
+        });
+      }
+      
+      // 添加转换报告
+      const report = generateReport(convertedResult);
+      zip.file('CONVERSION_REPORT.md', report);
+      
+      // 生成并下载ZIP文件
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `optimized-config-${timestamp}.zip`;
+      
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = '📥 下载优化配置';
+    }
+  });
+
+  // 清空结果
+  clearBtn.addEventListener('click', () => {
+    conversionResult.innerHTML = '<p class="placeholder">点击"开始转换"查看结果...</p>';
+    conversionReport.innerHTML = '<p class="placeholder">等待转换报告...</p>';
+    generatedFiles.innerHTML = '<p class="placeholder">等待文件生成...</p>';
+    configPreview.innerHTML = '<p class="placeholder">等待配置预览...</p>';
+    downloadBtn.disabled = true;
+    convertedResult = null;
+  });
+
+  function displayConversionResult(result: any) {
+    const { optimization } = result;
+    
+    conversionResult.innerHTML = `
+      <div class="result-item success">
+        <h4>✅ 转换成功</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">总分类数:</span>
+            <span class="stat-value">${optimization.totalCategories}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">总网站数:</span>
+            <span class="stat-value">${optimization.totalSites}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">原始大小:</span>
+            <span class="stat-value">${optimization.originalSizeKB}KB</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">优化后大小:</span>
+            <span class="stat-value">${optimization.optimizedSizeKB}KB</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">压缩比例:</span>
+            <span class="stat-value highlight">${optimization.compressionRatio}%</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">预览数量:</span>
+            <span class="stat-value">${optimization.previewCount}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function displayConversionReport(result: any) {
+    const report = generateReport(result);
+    conversionReport.innerHTML = `
+      <div class="result-item">
+        <pre class="report-content">${report}</pre>
+      </div>
+    `;
+  }
+
+  function displayGeneratedFiles(result: any) {
+    const { baseConfig, categoryFiles } = result;
+    
+    const baseConfigSize = Math.ceil(JSON.stringify(baseConfig).length / 1024);
+    const totalCategorySize = categoryFiles.reduce((sum: number, file: any) => 
+      sum + file.content.metadata.fileSizeKB, 0
+    );
+    
+    generatedFiles.innerHTML = `
+      <div class="result-item">
+        <h4>📁 文件清单</h4>
+        <div class="file-list">
+          <div class="file-item main-config">
+            <span class="file-name">📄 config.json</span>
+            <span class="file-size">${baseConfigSize}KB</span>
+            <span class="file-desc">基础配置和预览数据</span>
+          </div>
+          <div class="file-group">
+            <div class="file-group-header">
+              <span class="folder-name">📁 categories/</span>
+              <span class="folder-size">${totalCategorySize}KB</span>
+            </div>
+            ${categoryFiles.map((file: any) => `
+              <div class="file-item category-file">
+                <span class="file-name">📄 ${file.filename}</span>
+                <span class="file-size">${file.content.metadata.fileSizeKB}KB</span>
+                <span class="file-desc">${file.content.categoryName} (${file.content.siteCount} 个网站)</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function displayConfigPreview(result: any) {
+    const { baseConfig } = result;
+    
+    configPreview.innerHTML = `
+      <div class="result-item">
+        <h4>🔍 基础配置预览</h4>
+        <div class="config-summary">
+          <p><strong>网站标题:</strong> ${baseConfig.site.title}</p>
+          <p><strong>菜单项数:</strong> ${baseConfig.menuItems.length}</p>
+          <p><strong>优化状态:</strong> ${baseConfig.optimization.enabled ? '已启用' : '未启用'}</p>
+        </div>
+        <details class="config-details">
+          <summary>查看完整配置 JSON</summary>
+          <pre class="config-json">${JSON.stringify(baseConfig, null, 2)}</pre>
+        </details>
+      </div>
+    `;
+  }
+</script>
+
+<style>
+  .converter-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .converter-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .converter-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .converter-controls {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .input-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+  }
+
+  .input-group, .option-item {
+    margin-bottom: 1rem;
+  }
+
+  .input-group label, .option-item label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .path-select, .option-item input {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .options-group {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .options-group h4 {
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .option-item label {
+    margin-bottom: 0;
+    min-width: 200px;
+  }
+
+  .option-item input[type="number"] {
+    max-width: 120px;
+  }
+
+  .option-item input[type="checkbox"] {
+    width: auto;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .convert-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .convert-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .convert-btn.secondary {
+    background: #28a745;
+    color: white;
+  }
+
+  .convert-btn:not(.primary):not(.secondary) {
+    background: #6c757d;
+    color: white;
+  }
+
+  .convert-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .convert-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .converter-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .result-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .result-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+  }
+
+  .result-content {
+    min-height: 150px;
+  }
+
+  .result-item {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .result-item.success {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+  }
+
+  .result-item.error {
+    background: #f8d7da;
+    border-left: 4px solid #dc3545;
+  }
+
+  .result-item:not(.success):not(.error) {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.7);
+    border-radius: 6px;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .stat-value.highlight {
+    color: #28a745;
+    font-size: 1.4rem;
+  }
+
+  .report-content {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    overflow-x: auto;
+  }
+
+  .file-list {
+    space-y: 0.5rem;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+  }
+
+  .file-item.main-config {
+    background: #e3f2fd;
+    border-left: 3px solid #2196f3;
+  }
+
+  .file-item.category-file {
+    margin-left: 1rem;
+    background: #f0f8f0;
+    border-left: 3px solid #28a745;
+  }
+
+  .file-group-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    background: #fff3cd;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #ffc107;
+  }
+
+  .file-name, .folder-name {
+    font-weight: 600;
+    min-width: 120px;
+  }
+
+  .file-size, .folder-size {
+    font-weight: bold;
+    color: #666;
+    min-width: 60px;
+  }
+
+  .file-desc {
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .config-summary {
+    margin-bottom: 1rem;
+  }
+
+  .config-summary p {
+    margin-bottom: 0.5rem;
+  }
+
+  .config-details {
+    margin-top: 1rem;
+  }
+
+  .config-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+
+  .config-json {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .placeholder {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .error {
+    color: #dc3545;
+    font-weight: 600;
+  }
+
+  .converter-info {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 2rem;
+    border-left: 4px solid #17a2b8;
+  }
+
+  .converter-info h3 {
+    margin-bottom: 1.5rem;
+    color: #333;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .info-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .info-item h4 {
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+  }
+
+  .info-item ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .info-item li {
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .info-item li::before {
+    content: "•";
+    color: #17a2b8;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+  }
+
+  @media (max-width: 768px) {
+    .converter-container {
+      padding: 1rem;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .convert-btn {
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    .converter-results {
+      grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .option-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .option-item label {
+      min-width: auto;
+    }
+  }
+</style>
