@@ -108,10 +108,10 @@ export const POST: APIRoute = async ({ request }) => {
     const logoText = parseResult.formFields.logoText || 'MyNav';
 
     // 获取优化选项
-    const optimizationEnabled = parseResult.formFields.enableOptimization === 'true';
-    const previewCount = parseInt(parseResult.formFields.previewSiteCount) || 3;
-    const chunkSizeLimit = parseInt(parseResult.formFields.fileSizeLimit) || 100;
-    const enablePreload = parseResult.formFields.enableSmartPreload === 'true';
+    const optimizationEnabled = parseResult.formFields.optimizationEnabled === 'on';
+    const previewCount = parseInt(parseResult.formFields.previewCount) || 3;
+    const chunkSizeLimit = parseInt(parseResult.formFields.chunkSizeLimit) || 100;
+    const enablePreload = parseResult.formFields.enablePreload === 'on';
     
     // 验证文件
     if (!menuFile || !siteFile) {
