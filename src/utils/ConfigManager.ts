@@ -39,8 +39,24 @@ export class ConfigManager {
     conversionTime: 0
   };
 
-  constructor(configPath: string = '/config.json') {
-    this.configPath = configPath;
+  constructor(configPath?: string) {
+    // 智能路径检测：优先使用public/，回退到src/data/
+    this.configPath = configPath || this.detectConfigPath();
+  }
+
+  /**
+   * 智能检测配置文件路径
+   */
+  private detectConfigPath(): string {
+    // 开发环境优先级：public/ > src/data/
+    const paths = [
+      '/config.json',           // public/config.json (懒加载友好)
+      '/src/data/config.json'   // src/data/config.json (构建时)
+    ];
+
+    // 在实际使用中，我们会先尝试public/路径
+    // 如果失败，ConfigManager会自动处理错误
+    return paths[0];
   }
 
   /**

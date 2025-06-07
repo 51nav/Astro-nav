@@ -3,11 +3,14 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "npm run copy-config && astro dev",
+    "dev:watch": "npm run copy-config:watch & astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "build": "npm run copy-config && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "copy-config": "node scripts/copy-config.js",
+    "copy-config:watch": "node scripts/copy-config.js --watch"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
