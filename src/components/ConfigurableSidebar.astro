@@ -1,0 +1,243 @@
+---
+import { getMenuItems, getSiteInfo } from '../utils/config';
+
+const menuItems = getMenuItems();
+const siteInfo = getSiteInfo();
+
+function getItemCount(menuItem: any) {
+  if (menuItem.submenu) {
+    return menuItem.submenu.reduce((total: number, sub: any) => total + sub.sites.length, 0);
+  }
+  return menuItem.sites ? menuItem.sites.length : 0;
+}
+---
+
+<aside class="sidebar">
+  <div class="logo">
+    <a href={siteInfo.logo.href}>
+      <h1>{siteInfo.logo.text}</h1>
+    </a>
+  </div>
+  
+  <nav class="nav-menu">
+    {menuItems.map((item, index) => (
+      <div class="nav-section">
+        <a href={item.href} class="nav-item" data-category={index}>
+          <iconify-icon icon={item.icon} class="nav-icon"></iconify-icon>
+          <span class="nav-text">{item.name}</span>
+          <span class="nav-count">({getItemCount(item)})</span>
+        </a>
+        
+        {item.submenu && (
+          <div class="sub-nav">
+            {item.submenu.map((sub) => (
+              <a href={sub.href} class="sub-nav-item">
+                <iconify-icon icon={sub.icon} class="sub-nav-icon"></iconify-icon>
+                <span class="sub-nav-text">{sub.name}</span>
+                <span class="sub-nav-count">({sub.sites.length})</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </nav>
+  
+  <div class="sidebar-footer">
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-number">{menuItems.length}</span>
+        <span class="stat-label">分类</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">
+          {menuItems.reduce((total, item) => total + getItemCount(item), 0)}
+        </span>
+        <span class="stat-label">网站</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 100vh;
+    background: #f8f9fa;
+    border-right: 1px solid #eaeaea;
+    overflow-y: auto;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid #eaeaea;
+    background: white;
+  }
+
+  .logo h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #2937f0;
+    font-weight: 600;
+  }
+
+  .logo a {
+    text-decoration: none;
+  }
+
+  .nav-menu {
+    flex: 1;
+    padding: 1rem 0;
+  }
+
+  .nav-section {
+    margin-bottom: 0.5rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #666;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover {
+    background: white;
+    color: #2937f0;
+    border-left-color: #2937f0;
+  }
+
+  .nav-icon {
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+    min-width: 20px;
+  }
+
+  .nav-text {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .nav-count {
+    font-size: 0.8rem;
+    color: #999;
+    background: #f0f0f0;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .sub-nav {
+    background: #f5f5f5;
+    border-left: 2px solid #e0e0e0;
+    margin-left: 1rem;
+  }
+
+  .sub-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    color: #777;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+  }
+
+  .sub-nav-item:hover {
+    background: white;
+    color: #2937f0;
+  }
+
+  .sub-nav-icon {
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+    min-width: 16px;
+  }
+
+  .sub-nav-text {
+    flex: 1;
+  }
+
+  .sub-nav-count {
+    font-size: 0.75rem;
+    color: #999;
+    background: #e8e8e8;
+    padding: 0.1rem 0.4rem;
+    border-radius: 8px;
+    min-width: 25px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid #eaeaea;
+    background: white;
+  }
+
+  .stats {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2937f0;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar.open {
+      transform: translateX(0);
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const navItems = document.querySelectorAll('.nav-item[data-category]');
+    
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const categoryIndex = item.getAttribute('data-category');
+        const targetElement = document.getElementById(`category-${categoryIndex}`);
+        
+        if (targetElement) {
+          targetElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  });
+</script>

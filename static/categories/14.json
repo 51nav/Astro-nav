@@ -1,0 +1,54 @@
+{
+  "categoryId": 14,
+  "categoryName": "联盟后台",
+  "sites": [
+    {
+      "title": "GetCake",
+      "description": "目前追踪最准价格最贵的平台",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Tune(原hasoffers)",
+      "description": "用户使用最多的平台之一",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Affise",
+      "description": "新晋崛起的Performance Marketing Platform服务商",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

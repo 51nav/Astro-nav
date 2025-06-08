@@ -1,0 +1,176 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Busboy文件上传测试">
+  <div style="max-width: 600px; margin: 2rem auto; padding: 2rem;">
+    <h1>🚀 Busboy文件上传测试</h1>
+    <p style="color: #666; margin-bottom: 2rem;">
+      使用busboy库手动解析multipart数据，绕过Astro的FormData限制
+    </p>
+    
+    <form id="fileForm" enctype="multipart/form-data" style="background: #f5f5f5; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+      <div style="margin-bottom: 1rem;">
+        <label for="testFile">选择文件:</label>
+        <input type="file" id="testFile" name="testFile" accept=".csv,.txt" required>
+        <small style="display: block; margin-top: 0.5rem; color: #666;">
+          请选择一个小的CSV或TXT文件进行测试
+        </small>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label for="testName">测试名称:</label>
+        <input type="text" id="testName" name="testName" value="Busboy Upload Test" required>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label for="description">描述:</label>
+        <textarea id="description" name="description" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">这是一个使用busboy库的文件上传测试</textarea>
+      </div>
+      
+      <button type="submit" style="background: #007bff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; font-size: 1rem;">
+        🚀 上传测试 (Busboy)
+      </button>
+    </form>
+    
+    <!-- 创建测试文件按钮 -->
+    <div style="background: #e9ecef; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+      <h3>📋 创建测试文件</h3>
+      <button id="createTestFile" style="background: #28a745; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; margin-right: 1rem;">
+        创建CSV测试文件
+      </button>
+      <button id="createTextFile" style="background: #17a2b8; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+        创建TXT测试文件
+      </button>
+      <small style="display: block; margin-top: 0.5rem; color: #666;">
+        点击按钮会创建并下载测试文件
+      </small>
+    </div>
+    
+    <div id="result" style="padding: 1rem; background: #f8f9fa; border-radius: 4px; display: none;">
+      <h3>测试结果:</h3>
+      <pre id="resultContent" style="background: white; padding: 1rem; border-radius: 4px; overflow: auto; white-space: pre-wrap; max-height: 400px;"></pre>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('fileForm') as HTMLFormElement;
+  const result = document.getElementById('result') as HTMLElement;
+  const resultContent = document.getElementById('resultContent') as HTMLElement;
+  const createTestFile = document.getElementById('createTestFile') as HTMLButtonElement;
+  const createTextFile = document.getElementById('createTextFile') as HTMLButtonElement;
+  
+  // 创建CSV测试文件
+  createTestFile.addEventListener('click', () => {
+    const csvContent = `name,age,city,occupation
+John Doe,25,New York,Developer
+Jane Smith,30,Los Angeles,Designer
+Bob Johnson,35,Chicago,Manager
+Alice Brown,28,Houston,Analyst`;
+    
+    downloadFile(csvContent, 'test-data.csv', 'text/csv');
+  });
+  
+  // 创建TXT测试文件
+  createTextFile.addEventListener('click', () => {
+    const txtContent = `这是一个测试文本文件
+用于测试busboy文件上传功能
+
+包含中文字符测试
+包含特殊字符: !@#$%^&*()
+包含数字: 123456789
+
+文件创建时间: ${new Date().toLocaleString()}`;
+    
+    downloadFile(txtContent, 'test-text.txt', 'text/plain');
+  });
+  
+  function downloadFile(content: string, filename: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    alert(`${filename} 已下载，请选择该文件进行上传测试`);
+  }
+  
+  function showResult(data: any, isError = false) {
+    result.style.display = 'block';
+    resultContent.style.color = isError ? 'red' : 'green';
+    resultContent.textContent = JSON.stringify(data, null, 2);
+    
+    // 滚动到结果区域
+    result.scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    console.log('=== Client Busboy Upload Test ===');
+    
+    const formData = new FormData(form);
+    
+    // 打印FormData内容
+    console.log('FormData entries:');
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, {
+          name: value.name,
+          size: value.size,
+          type: value.type,
+          lastModified: value.lastModified
+        });
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+    
+    // 显示加载状态
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '⏳ 上传中...';
+    submitBtn.disabled = true;
+    
+    try {
+      console.log('Sending busboy upload request...');
+      
+      const response = await fetch('/api/test-file-busboy', {
+        method: 'POST',
+        body: formData
+        // 不设置Content-Type，让浏览器自动设置
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Success response:', data);
+        showResult(data);
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        showResult(errorData, true);
+      }
+      
+    } catch (error) {
+      console.error('Request failed:', error);
+      showResult({ 
+        error: 'Network Error', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        type: 'Busboy Upload Failed'
+      }, true);
+    } finally {
+      // 恢复按钮状态
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</Layout>

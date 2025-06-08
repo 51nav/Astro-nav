@@ -3,21 +3,33 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
+    "dev": "npm run build-config && astro dev",
+    "dev:watch": "npm run copy-config:watch & astro dev",
+    "start": "npm run build-config && astro dev",
+    "build": "npm run build-config && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "build-config": "node scripts/build-config.js",
+    "prepare-config": "node scripts/prepare-config.js",
+    "copy-config": "node scripts/copy-config.js",
+    "copy-config:watch": "node scripts/copy-config.js --watch"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/sitemap": "^3.2.1",
+    "@types/busboy": "^1.5.4",
     "astro": "^4.16.15",
+    "busboy": "^1.6.0",
+    "jszip": "^3.10.1",
+    "papaparse": "^5.5.3",
     "qrcode": "^1.5.4",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.4",
+    "@types/jszip": "^3.4.0",
+    "@types/papaparse": "^5.3.16",
     "@types/qrcode": "^1.5.5"
   }
 }

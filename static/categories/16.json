@@ -1,0 +1,54 @@
+{
+  "categoryId": 16,
+  "categoryName": "云服务器",
+  "sites": [
+    {
+      "title": "Vultr",
+      "description": "Choopa旗下品牌，价格厚道",
+      "url": "https://vultr.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "DigitalOcean",
+      "description": "低价优质的策略，成为AWS的有利竞争者",
+      "url": "https://digitalocean.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Linode",
+      "description": "网络好, 服务稳定，affiliate的最爱之一",
+      "url": "https://linode.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

@@ -2,12 +2,21 @@
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/Sidebar.astro';
 import CategoryCard from '../components/CategoryCard.astro';
-import { navigationData } from '../data/navigation';
+import { getConfig, getMenuItems, getSiteInfo } from '../utils/config';
+import { convertMenuItemToCategory } from '../utils/dataConverter';
+
+// 获取配置数据
+const config = getConfig();
+const siteInfo = getSiteInfo();
+const menuItems = getMenuItems();
+
+// 转换为旧格式以保持组件兼容性
+const navigationData = menuItems.map(convertMenuItemToCategory);
 ---
 
-<Layout 
-  title="Affiliate导航 - 专业的Affiliate营销导航网站"
-  description="发现最好的Affiliate营销工具、资源和平台。专业的导航网站，助您在Affiliate营销领域取得成功。"
+<Layout
+  title={siteInfo.title + " - " + siteInfo.description}
+  description={siteInfo.description}
 >
   <div class="layout">
     <Sidebar />

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>按钮测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 JavaScript按钮测试</h1>
+        <p>测试JavaScript基本功能是否正常</p>
+
+        <h2>基础测试</h2>
+        <button class="test-button" onclick="testBasic()">🎯 基础测试</button>
+        <button class="test-button" onclick="testAlert()">🔔 弹窗测试</button>
+        <button class="test-button" onclick="testConsole()">📝 控制台测试</button>
+        <div id="basicResult" class="result" style="display: none;"></div>
+
+        <h2>DOM操作测试</h2>
+        <button class="test-button" onclick="testDOM()">🔧 DOM测试</button>
+        <button class="test-button" onclick="testFetch()">🌐 网络测试</button>
+        <div id="domResult" class="result" style="display: none;"></div>
+
+        <h2>配置文件测试</h2>
+        <button class="test-button" onclick="testConfig()">📄 配置测试</button>
+        <div id="configResult" class="result" style="display: none;"></div>
+
+        <h2>调试信息</h2>
+        <div id="debugInfo" class="result info" style="display: block;">
+            <strong>调试信息:</strong><br>
+            页面加载时间: <span id="loadTime"></span><br>
+            用户代理: <span id="userAgent"></span><br>
+            当前URL: <span id="currentUrl"></span>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时间
+        document.getElementById('loadTime').textContent = new Date().toLocaleString();
+        document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 80) + '...';
+        document.getElementById('currentUrl').textContent = window.location.href;
+
+        // 基础测试
+        function testBasic() {
+            console.log('🧪 开始基础测试...');
+            const resultDiv = document.getElementById('basicResult');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result success';
+                
+                let result = '🎉 基础测试成功！\n\n';
+                result += '测试项目:\n';
+                result += '✅ JavaScript执行正常\n';
+                result += '✅ DOM操作正常\n';
+                result += '✅ 事件绑定正常\n';
+                result += '✅ 函数调用正常\n';
+                result += '✅ 字符串操作正常\n\n';
+                result += `测试时间: ${new Date().toLocaleString()}\n`;
+                result += `随机数: ${Math.random().toFixed(4)}`;
+                
+                resultDiv.textContent = result;
+                console.log('✅ 基础测试完成');
+                
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 基础测试失败:\n${error.message}`;
+                console.error('❌ 基础测试失败:', error);
+            }
+        }
+
+        // 弹窗测试
+        function testAlert() {
+            console.log('🔔 弹窗测试');
+            alert('🎉 弹窗测试成功！JavaScript正常工作。');
+        }
+
+        // 控制台测试
+        function testConsole() {
+            console.log('📝 控制台测试开始');
+            console.log('✅ console.log 正常工作');
+            console.warn('⚠️ console.warn 正常工作');
+            console.error('❌ console.error 正常工作 (这是测试，不是真的错误)');
+            console.info('ℹ️ console.info 正常工作');
+            
+            const resultDiv = document.getElementById('basicResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '📝 控制台测试完成！请按F12查看控制台输出。';
+        }
+
+        // DOM操作测试
+        function testDOM() {
+            console.log('🔧 DOM操作测试');
+            const resultDiv = document.getElementById('domResult');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result success';
+                
+                // 测试各种DOM操作
+                const testElement = document.createElement('div');
+                testElement.textContent = '测试元素';
+                
+                let result = '🔧 DOM操作测试成功！\n\n';
+                result += '测试项目:\n';
+                result += '✅ getElementById 正常\n';
+                result += '✅ createElement 正常\n';
+                result += '✅ style.display 正常\n';
+                result += '✅ className 设置正常\n';
+                result += '✅ textContent 设置正常\n\n';
+                result += `DOM元素数量: ${document.querySelectorAll('*').length}\n`;
+                result += `按钮数量: ${document.querySelectorAll('button').length}`;
+                
+                resultDiv.textContent = result;
+                console.log('✅ DOM操作测试完成');
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ DOM操作测试失败:\n${error.message}`;
+                console.error('❌ DOM操作测试失败:', error);
+            }
+        }
+
+        // 网络测试
+        async function testFetch() {
+            console.log('🌐 网络测试');
+            const resultDiv = document.getElementById('domResult');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '🔄 正在测试网络功能...';
+                
+                // 测试fetch API
+                const startTime = Date.now();
+                const response = await fetch('https://httpbin.org/json');
+                const endTime = Date.now();
+                const data = await response.json();
+                
+                let result = '🌐 网络测试成功！\n\n';
+                result += '测试项目:\n';
+                result += '✅ fetch API 正常\n';
+                result += '✅ Promise/async 正常\n';
+                result += '✅ JSON解析 正常\n';
+                result += '✅ 网络连接正常\n\n';
+                result += `响应时间: ${endTime - startTime}ms\n`;
+                result += `响应状态: ${response.status}\n`;
+                result += `数据类型: ${typeof data}`;
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                console.log('✅ 网络测试完成');
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 网络测试失败:\n${error.message}`;
+                console.error('❌ 网络测试失败:', error);
+            }
+        }
+
+        // 配置文件测试
+        async function testConfig() {
+            console.log('📄 配置文件测试');
+            const resultDiv = document.getElementById('configResult');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '🔄 正在测试配置文件加载...';
+                
+                // 尝试加载配置文件
+                const configPaths = [
+                    '/config.json',
+                    '/static/config.json',
+                    './config.json'
+                ];
+                
+                let result = '📄 配置文件测试结果:\n\n';
+                let successCount = 0;
+                
+                for (const path of configPaths) {
+                    try {
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            const config = await response.json();
+                            result += `✅ ${path} - 成功 (${JSON.stringify(config).length} 字符)\n`;
+                            successCount++;
+                        } else {
+                            result += `❌ ${path} - HTTP ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `❌ ${path} - ${error.message}\n`;
+                    }
+                }
+                
+                result += `\n总结: ${successCount}/${configPaths.length} 个配置文件可访问`;
+                
+                resultDiv.className = successCount > 0 ? 'result success' : 'result error';
+                resultDiv.textContent = result;
+                console.log('✅ 配置文件测试完成');
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 配置文件测试失败:\n${error.message}`;
+                console.error('❌ 配置文件测试失败:', error);
+            }
+        }
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 测试页面已加载');
+            console.log('💡 提示: 请按F12打开控制台查看详细日志');
+        });
+    </script>
+</body>
+</html>

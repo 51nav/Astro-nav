@@ -1,0 +1,496 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="配置生成器 - 性能优化版">
+  <div class="generator-container">
+    <header class="generator-header">
+      <h1>🚀 配置生成器</h1>
+      <p>通过表格数据生成导航网站配置文件，支持性能优化</p>
+    </header>
+
+    <div class="generator-content">
+      <form id="configForm" class="config-form" enctype="multipart/form-data">
+        <!-- 网站基本信息 -->
+        <section class="form-section">
+          <h2>📝 网站基本信息</h2>
+          <div class="form-group">
+            <label for="siteTitle">网站标题</label>
+            <input type="text" id="siteTitle" name="siteTitle" value="我的导航网站" required>
+          </div>
+          <div class="form-group">
+            <label for="siteDescription">网站描述</label>
+            <input type="text" id="siteDescription" name="siteDescription" value="专业的导航平台" required>
+          </div>
+          <div class="form-group">
+            <label for="logoText">Logo文字</label>
+            <input type="text" id="logoText" name="logoText" value="MyNav" required>
+          </div>
+        </section>
+
+        <!-- 文件上传 -->
+        <section class="form-section">
+          <h2>📊 表格文件上传</h2>
+          <div class="form-group">
+            <label for="menuFile">菜单表格文件</label>
+            <input type="file" id="menuFile" name="menuFile" accept=".csv,.xlsx" required>
+            <small>支持 CSV 和 Excel 格式，包含菜单结构数据</small>
+          </div>
+          <div class="form-group">
+            <label for="siteFile">网站表格文件</label>
+            <input type="file" id="siteFile" name="siteFile" accept=".csv,.xlsx" required>
+            <small>支持 CSV 和 Excel 格式，包含网站详细数据</small>
+          </div>
+        </section>
+
+        <!-- 性能优化选项 -->
+        <section class="form-section">
+          <h2>⚡ 性能优化选项</h2>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="optimizationEnabled" name="optimizationEnabled" checked>
+              <span class="checkmark"></span>
+              启用性能优化
+            </label>
+            <small>将配置文件拆分为多个小文件，提升加载性能</small>
+          </div>
+          
+          <div id="optimizationOptions" class="optimization-options">
+            <div class="form-group">
+              <label for="previewCount">预览网站数量</label>
+              <input type="number" id="previewCount" name="previewCount" value="3" min="1" max="10">
+              <small>每个分类显示的预览网站数量</small>
+            </div>
+            <div class="form-group">
+              <label for="chunkSizeLimit">分类文件大小限制 (KB)</label>
+              <input type="number" id="chunkSizeLimit" name="chunkSizeLimit" value="100" min="50" max="500">
+              <small>单个分类文件的最大大小</small>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="enablePreload" name="enablePreload" checked>
+                <span class="checkmark"></span>
+                启用智能预加载
+              </label>
+              <small>自动预加载热门分类，提升用户体验</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- 生成按钮 -->
+        <section class="form-section">
+          <button type="submit" class="generate-btn" id="generateBtn">
+            <span class="btn-text">🚀 生成配置文件</span>
+            <span class="btn-loading" style="display: none;">⏳ 生成中...</span>
+          </button>
+        </section>
+      </form>
+
+      <!-- 结果显示 -->
+      <div id="resultSection" class="result-section" style="display: none;">
+        <h2>✅ 生成完成</h2>
+        <div id="resultContent" class="result-content">
+          <!-- 动态内容 -->
+        </div>
+      </div>
+
+      <!-- 错误显示 -->
+      <div id="errorSection" class="error-section" style="display: none;">
+        <h2>❌ 生成失败</h2>
+        <div id="errorContent" class="error-content">
+          <!-- 动态内容 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 模板下载 -->
+    <section class="template-section">
+      <h2>📋 模板文件下载</h2>
+      <p>如果您还没有准备表格数据，可以下载模板文件：</p>
+      <div class="template-links">
+        <a href="/templates/menu-template.csv" download class="template-link">
+          📊 菜单模板 (CSV)
+        </a>
+        <a href="/templates/site-template.csv" download class="template-link">
+          🌐 网站模板 (CSV)
+        </a>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<script>
+  // 表单处理逻辑
+  const form = document.getElementById('configForm') as HTMLFormElement;
+  const generateBtn = document.getElementById('generateBtn') as HTMLButtonElement;
+  const btnText = generateBtn.querySelector('.btn-text') as HTMLElement;
+  const btnLoading = generateBtn.querySelector('.btn-loading') as HTMLElement;
+  const resultSection = document.getElementById('resultSection') as HTMLElement;
+  const errorSection = document.getElementById('errorSection') as HTMLElement;
+  const optimizationEnabled = document.getElementById('optimizationEnabled') as HTMLInputElement;
+  const optimizationOptions = document.getElementById('optimizationOptions') as HTMLElement;
+
+  // 优化选项显示/隐藏
+  optimizationEnabled.addEventListener('change', () => {
+    optimizationOptions.style.display = optimizationEnabled.checked ? 'block' : 'none';
+  });
+
+  // 表单提交处理
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // 显示加载状态
+    generateBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    resultSection.style.display = 'none';
+    errorSection.style.display = 'none';
+
+    try {
+      const formData = new FormData(form);
+      
+      const response = await fetch('/api/generate-optimized-config', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        // 获取配置信息
+        const configInfo = response.headers.get('X-Config-Info');
+        let info = null;
+        if (configInfo) {
+          try {
+            info = JSON.parse(configInfo);
+          } catch (e) {
+            console.warn('Failed to parse config info:', e);
+          }
+        }
+
+        // 下载文件
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = info?.data?.filename || 'config.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        // 显示成功信息
+        showResult(info);
+      } else {
+        const errorData = await response.json();
+        showError(errorData.error || '生成失败');
+      }
+    } catch (error) {
+      console.error('生成配置时出错:', error);
+      showError('网络错误，请检查网络连接后重试');
+    } finally {
+      // 恢复按钮状态
+      generateBtn.disabled = false;
+      btnText.style.display = 'inline';
+      btnLoading.style.display = 'none';
+    }
+  });
+
+  function showResult(info: any) {
+    const resultContent = document.getElementById('resultContent') as HTMLElement;
+    
+    if (info?.data?.optimization?.enabled) {
+      resultContent.innerHTML = `
+        <div class="optimization-stats">
+          <h3>🎯 优化效果</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">总分类数</span>
+              <span class="stat-value">${info.data.optimization.totalCategories}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">总网站数</span>
+              <span class="stat-value">${info.data.optimization.totalSites}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">原始大小</span>
+              <span class="stat-value">${info.data.optimization.originalSizeKB}KB</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">优化后大小</span>
+              <span class="stat-value">${info.data.optimization.optimizedSizeKB}KB</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">压缩比例</span>
+              <span class="stat-value">${info.data.optimization.compressionRatio}%</span>
+            </div>
+          </div>
+          <div class="deployment-info">
+            <h4>📁 部署说明</h4>
+            <ol>
+              <li>解压下载的ZIP文件</li>
+              <li>将 <code>config.json</code> 放到项目的 <code>src/data/</code> 目录</li>
+              <li>将 <code>categories/</code> 文件夹放到项目的 <code>public/data/</code> 目录</li>
+              <li>重新构建和部署项目</li>
+            </ol>
+          </div>
+        </div>
+      `;
+    } else {
+      resultContent.innerHTML = `
+        <div class="traditional-info">
+          <h3>📄 传统配置文件</h3>
+          <p>已生成传统格式的配置文件，直接替换项目中的配置文件即可。</p>
+          <div class="deployment-info">
+            <h4>📁 部署说明</h4>
+            <ol>
+              <li>将下载的 <code>config.json</code> 放到项目的 <code>src/data/</code> 目录</li>
+              <li>重新构建和部署项目</li>
+            </ol>
+          </div>
+        </div>
+      `;
+    }
+    
+    resultSection.style.display = 'block';
+  }
+
+  function showError(message: string) {
+    const errorContent = document.getElementById('errorContent') as HTMLElement;
+    errorContent.innerHTML = `
+      <div class="error-message">
+        <p>${message}</p>
+        <button onclick="location.reload()" class="retry-btn">🔄 重试</button>
+      </div>
+    `;
+    errorSection.style.display = 'block';
+  }
+</script>
+
+<style>
+  .generator-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .generator-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .generator-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-section h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="number"],
+  .form-group input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+  }
+
+  .form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #666;
+    font-size: 0.875rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    margin-right: 0.75rem;
+    transform: scale(1.2);
+  }
+
+  .optimization-options {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+  }
+
+  .generate-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .result-section,
+  .error-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .result-section {
+    border-left: 4px solid #28a745;
+  }
+
+  .error-section {
+    border-left: 4px solid #dc3545;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .deployment-info {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #e3f2fd;
+    border-radius: 8px;
+  }
+
+  .deployment-info code {
+    background: #fff;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .template-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 3rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .template-links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .template-link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #f8f9fa;
+    color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    border: 2px solid #e1e5e9;
+    transition: all 0.3s ease;
+  }
+
+  .template-link:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+
+  .retry-btn {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .generator-container {
+      padding: 1rem;
+    }
+    
+    .template-links {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</Layout>

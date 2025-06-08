@@ -1,0 +1,54 @@
+{
+  "categoryId": 0,
+  "categoryName": "追踪系统",
+  "sites": [
+    {
+      "title": "Binom",
+      "description": "老毛子写的高性能tracker",
+      "url": "https://binom.org",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Voluum",
+      "description": "业界成名较早的tracker之一",
+      "url": "https://voluum.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "FunnelFlux",
+      "description": "价格昂贵但是功能强大, 支持安装在自己的服务器上",
+      "url": "https://funnelflux.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

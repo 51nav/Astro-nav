@@ -1,0 +1,54 @@
+{
+  "categoryId": 19,
+  "categoryName": "VPS代理",
+  "sites": [
+    {
+      "title": "911",
+      "description": "老牌代理服务商",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "芝麻代理",
+      "description": "国内代理服务商",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "阿伟云",
+      "description": "性价比不错的代理",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

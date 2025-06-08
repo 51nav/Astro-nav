@@ -1,0 +1,54 @@
+{
+  "categoryId": 12,
+  "categoryName": "邮件营销",
+  "sites": [
+    {
+      "title": "Mailgun",
+      "description": "SMTP服务商，transaction email 首选",
+      "url": "https://mailgun.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Sendgrid",
+      "description": "纯SMTP服务商，价格实惠",
+      "url": "https://sendgrid.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Mailchimp",
+      "description": "全平台的邮件营销平台",
+      "url": "https://mailchimp.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

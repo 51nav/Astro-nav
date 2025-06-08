@@ -1,0 +1,521 @@
+---
+/**
+ * 错误消息组件
+ * Week 3 - 任务2.3
+ */
+
+import type { ErrorType, ErrorSeverity } from '../utils/ErrorHandler';
+
+export interface Props {
+  /** 错误类型 */
+  type?: ErrorType | string;
+  /** 错误严重程度 */
+  severity?: ErrorSeverity | 'low' | 'medium' | 'high' | 'critical';
+  /** 错误消息 */
+  message?: string;
+  /** 是否显示错误 */
+  visible?: boolean;
+  /** 是否可关闭 */
+  dismissible?: boolean;
+  /** 是否显示重试按钮 */
+  showRetry?: boolean;
+  /** 是否显示详细信息 */
+  showDetails?: boolean;
+  /** 详细错误信息 */
+  details?: string;
+  /** 自动消失时间 (ms) */
+  autoHide?: number;
+  /** 自定义CSS类 */
+  className?: string;
+  /** 错误图标 */
+  icon?: string;
+}
+
+const {
+  type = 'UNKNOWN_ERROR',
+  severity = 'medium',
+  message = '操作失败，请稍后重试',
+  visible = true,
+  dismissible = true,
+  showRetry = false,
+  showDetails = false,
+  details = '',
+  autoHide = 0,
+  className = '',
+  icon
+} = Astro.props;
+
+// 如果不显示，直接返回
+if (!visible) {
+  return null;
+}
+
+// 根据错误类型和严重程度确定样式
+const getSeverityClass = (sev: string) => {
+  switch (sev.toLowerCase()) {
+    case 'critical': return 'error-critical';
+    case 'high': return 'error-high';
+    case 'medium': return 'error-medium';
+    case 'low': return 'error-low';
+    default: return 'error-medium';
+  }
+};
+
+const getErrorIcon = (errorType: string, errorIcon?: string) => {
+  if (errorIcon) return errorIcon;
+  
+  switch (errorType) {
+    case 'NETWORK_ERROR': return '🌐';
+    case 'TIMEOUT_ERROR': return '⏰';
+    case 'DATA_ERROR': return '📊';
+    case 'CACHE_ERROR': return '💾';
+    case 'PARSE_ERROR': return '🔧';
+    case 'CONFIG_ERROR': return '⚙️';
+    case 'PRELOAD_ERROR': return '🔮';
+    case 'STORAGE_ERROR': return '💿';
+    default: return '⚠️';
+  }
+};
+
+const severityClass = getSeverityClass(severity);
+const errorIcon = getErrorIcon(type, icon);
+const combinedClass = ['error-message', severityClass, className].filter(Boolean).join(' ');
+---
+
+<div class={combinedClass} id="error-message" role="alert" aria-live="polite">
+  <!-- 错误内容 -->
+  <div class="error-content">
+    <!-- 错误图标和消息 -->
+    <div class="error-main">
+      <span class="error-icon" aria-hidden="true">{errorIcon}</span>
+      <div class="error-text">
+        <div class="error-message-text">{message}</div>
+        {type !== 'UNKNOWN_ERROR' && (
+          <div class="error-type">错误类型: {type}</div>
+        )}
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="error-actions">
+      {showRetry && (
+        <button class="error-btn error-btn-retry" id="retry-btn" aria-label="重试操作">
+          🔄 重试
+        </button>
+      )}
+      
+      {showDetails && details && (
+        <button class="error-btn error-btn-details" id="details-btn" aria-label="查看详细信息">
+          📋 详情
+        </button>
+      )}
+      
+      {dismissible && (
+        <button class="error-btn error-btn-close" id="close-btn" aria-label="关闭错误消息">
+          ✕
+        </button>
+      )}
+    </div>
+  </div>
+
+  <!-- 详细信息面板 -->
+  {showDetails && details && (
+    <div class="error-details" id="error-details" style="display: none;">
+      <div class="error-details-title">详细信息:</div>
+      <div class="error-details-content">{details}</div>
+    </div>
+  )}
+</div>
+
+<style>
+  /* 基础样式 */
+  .error-message {
+    position: relative;
+    margin: 16px 0;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+  }
+
+  /* 严重程度样式 */
+  .error-low {
+    background: #f0f9ff;
+    border-left-color: #0ea5e9;
+    color: #0c4a6e;
+  }
+
+  .error-medium {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+    color: #92400e;
+  }
+
+  .error-high {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+    color: #991b1b;
+  }
+
+  .error-critical {
+    background: #fdf2f8;
+    border-left-color: #ec4899;
+    color: #831843;
+    border: 2px solid #ec4899;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
+  }
+
+  /* 内容布局 */
+  .error-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .error-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .error-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .error-text {
+    flex: 1;
+  }
+
+  .error-message-text {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .error-type {
+    font-size: 12px;
+    opacity: 0.8;
+    font-family: monospace;
+  }
+
+  /* 操作按钮 */
+  .error-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .error-btn {
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .error-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+  }
+
+  .error-btn:active {
+    transform: translateY(0);
+  }
+
+  .error-btn-retry {
+    border-color: currentColor;
+    font-weight: 500;
+  }
+
+  .error-btn-retry:hover {
+    background: currentColor;
+    color: white;
+  }
+
+  .error-btn-details {
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .error-btn-close {
+    border-color: rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    min-width: 32px;
+    padding: 6px 8px;
+  }
+
+  .error-btn-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  /* 详细信息面板 */
+  .error-details {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .error-details-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .error-details-content {
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    opacity: 0.8;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* 动画效果 */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  }
+
+  .error-message.hiding {
+    animation: slideOut 0.3s ease-out forwards;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .error-message {
+      margin: 12px 0;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    .error-content {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .error-actions {
+      justify-content: flex-end;
+    }
+
+    .error-btn {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+  }
+
+  /* 深色模式支持 */
+  @media (prefers-color-scheme: dark) {
+    .error-low {
+      background: #0c1929;
+      color: #7dd3fc;
+    }
+
+    .error-medium {
+      background: #1c1917;
+      color: #fbbf24;
+    }
+
+    .error-high {
+      background: #1f1415;
+      color: #fca5a5;
+    }
+
+    .error-critical {
+      background: #1e1b26;
+      color: #f9a8d4;
+    }
+
+    .error-btn {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .error-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .error-details {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  /* 无障碍支持 */
+  @media (prefers-reduced-motion: reduce) {
+    .error-message {
+      animation: none;
+    }
+
+    .error-btn {
+      transition: none;
+    }
+
+    .error-btn:hover {
+      transform: none;
+    }
+  }
+
+  /* 打印样式 */
+  @media print {
+    .error-message {
+      box-shadow: none;
+      border: 1px solid #ccc;
+    }
+
+    .error-btn {
+      display: none;
+    }
+  }
+</style>
+
+<script define:vars={{ autoHide, showDetails }}>
+  console.log('🚨 ErrorMessage组件已加载');
+
+  // DOM元素
+  const errorMessage = document.getElementById('error-message');
+  const retryBtn = document.getElementById('retry-btn');
+  const detailsBtn = document.getElementById('details-btn');
+  const closeBtn = document.getElementById('close-btn');
+  const errorDetails = document.getElementById('error-details');
+
+  // 初始化
+  function initialize() {
+    // 绑定事件
+    if (retryBtn) {
+      retryBtn.addEventListener('click', handleRetry);
+    }
+
+    if (detailsBtn) {
+      detailsBtn.addEventListener('click', toggleDetails);
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', handleClose);
+    }
+
+    // 自动隐藏
+    if (autoHide > 0) {
+      setTimeout(() => {
+        handleClose();
+      }, autoHide);
+    }
+  }
+
+  // 处理重试
+  function handleRetry() {
+    console.log('🔄 用户点击重试');
+    
+    // 触发自定义事件
+    if (errorMessage) {
+      errorMessage.dispatchEvent(new CustomEvent('error-retry', {
+        bubbles: true,
+        detail: { timestamp: Date.now() }
+      }));
+    }
+  }
+
+  // 切换详细信息
+  function toggleDetails() {
+    if (errorDetails) {
+      const isVisible = errorDetails.style.display !== 'none';
+      errorDetails.style.display = isVisible ? 'none' : 'block';
+      
+      if (detailsBtn) {
+        detailsBtn.textContent = isVisible ? '📋 详情' : '📋 隐藏';
+      }
+    }
+  }
+
+  // 处理关闭
+  function handleClose() {
+    if (errorMessage) {
+      errorMessage.classList.add('hiding');
+      
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+        
+        // 触发自定义事件
+        errorMessage.dispatchEvent(new CustomEvent('error-dismissed', {
+          bubbles: true,
+          detail: { timestamp: Date.now() }
+        }));
+      }, 300);
+    }
+  }
+
+  // 显示错误消息
+  function showError() {
+    if (errorMessage) {
+      errorMessage.style.display = 'block';
+      errorMessage.classList.remove('hiding');
+    }
+  }
+
+  // 隐藏错误消息
+  function hideError() {
+    handleClose();
+  }
+
+  // 更新错误消息
+  function updateError(newMessage, newType, newSeverity) {
+    const messageText = errorMessage?.querySelector('.error-message-text');
+    const typeText = errorMessage?.querySelector('.error-type');
+    
+    if (messageText) {
+      messageText.textContent = newMessage;
+    }
+    
+    if (typeText && newType) {
+      typeText.textContent = `错误类型: ${newType}`;
+    }
+    
+    // 更新样式类
+    if (errorMessage && newSeverity) {
+      errorMessage.className = errorMessage.className.replace(
+        /error-(low|medium|high|critical)/,
+        `error-${newSeverity.toLowerCase()}`
+      );
+    }
+  }
+
+  // 使函数全局可用
+  window.ErrorMessage = {
+    show: showError,
+    hide: hideError,
+    update: updateError,
+    retry: handleRetry,
+    toggleDetails: toggleDetails
+  };
+
+  // 初始化组件
+  initialize();
+</script>

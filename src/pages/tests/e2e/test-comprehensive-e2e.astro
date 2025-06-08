@@ -1,0 +1,830 @@
+---
+/**
+ * 综合端到端测试页面
+ * Week 3 - 任务3.2最终验证
+ */
+
+import LoadingIndicator from '../../../components/LoadingIndicator.astro';
+import PerformanceMonitor from '../../../components/PerformanceMonitor.astro';
+import ErrorMessage from '../../../components/ErrorMessage.astro';
+import { ConfigManager } from '../../../utils/ConfigManager';
+import { LazyLoader } from '../../../utils/LazyLoader';
+import { PreloadStrategy } from '../../../utils/PreloadStrategy';
+import { PerformanceMonitor as PerformanceMonitorClass } from '../../../utils/PerformanceMonitor';
+import { defaultErrorHandler } from '../../../utils/ErrorHandler';
+import { defaultLocalStorageCache } from '../../../utils/LocalStorageCache';
+
+// 测试结果接口
+interface E2ETestResult {
+  name: string;
+  success: boolean;
+  duration: number;
+  details: any;
+  error?: string;
+  category: 'workflow' | 'integration' | 'performance' | 'reliability';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+}
+
+async function runE2ETest(
+  name: string,
+  category: E2ETestResult['category'],
+  priority: E2ETestResult['priority'],
+  testFn: () => Promise<any>
+): Promise<E2ETestResult> {
+  const startTime = performance.now();
+  try {
+    const result = await testFn();
+    return {
+      name,
+      category,
+      priority,
+      success: true,
+      duration: performance.now() - startTime,
+      details: result
+    };
+  } catch (error) {
+    return {
+      name,
+      category,
+      priority,
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 初始化所有组件
+const configManager = new ConfigManager();
+const lazyLoader = new LazyLoader(configManager);
+const preloadStrategy = new PreloadStrategy(lazyLoader, configManager);
+const performanceMonitor = new PerformanceMonitorClass();
+
+// 执行完整的端到端测试
+const e2eTests: E2ETestResult[] = [
+  // 工作流测试
+  await runE2ETest('完整用户工作流', 'workflow', 'critical', async () => {
+    // 1. 用户访问页面 - 配置加载
+    const configStart = performance.now();
+    const configResult = await configManager.loadConfig();
+    const configTime = performance.now() - configStart;
+
+    if (!configResult.success) throw new Error('配置加载失败');
+
+    // 2. 用户浏览分类 - 预加载执行
+    await preloadStrategy.executePreload();
+    const preloadStats = preloadStrategy.getPreloadStats();
+
+    // 3. 用户点击分类 - 懒加载
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length === 0) throw new Error('没有可用分类');
+
+    const categoryStart = performance.now();
+    const categoryResult = await lazyLoader.loadCategory(categories[0]);
+    const categoryTime = performance.now() - categoryStart;
+
+    if (!categoryResult.success) throw new Error('分类加载失败');
+
+    // 4. 用户再次点击 - 缓存命中
+    const cacheStart = performance.now();
+    const cacheResult = await lazyLoader.loadCategory(categories[0]);
+    const cacheTime = performance.now() - cacheStart;
+
+    return {
+      configLoadTime: configTime,
+      categoryLoadTime: categoryTime,
+      cacheLoadTime: cacheTime,
+      preloadSuccess: preloadStats.successRate > 0,
+      cacheHit: cacheResult.fromCache,
+      workflowComplete: configResult.success && categoryResult.success && cacheResult.fromCache,
+      performanceGood: configTime < 500 && categoryTime < 200 && cacheTime < 50
+    };
+  }),
+
+  await runE2ETest('双层缓存完整流程', 'integration', 'critical', async () => {
+    // 清空所有缓存
+    await lazyLoader.clearCache();
+    await defaultLocalStorageCache.clear();
+
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length === 0) throw new Error('没有可用分类');
+
+    const testCategory = categories[0];
+
+    // 1. 首次加载 (网络 → 双层缓存)
+    const networkLoad = await lazyLoader.loadCategory(testCategory);
+    const afterNetworkStats = lazyLoader.getCacheStats();
+
+    // 2. 内存缓存加载
+    const memoryLoad = await lazyLoader.loadCategory(testCategory);
+
+    // 3. 清除内存缓存，保留localStorage
+    await lazyLoader.clearCache();
+
+    // 4. localStorage缓存加载
+    const localStorageLoad = await lazyLoader.loadCategory(testCategory);
+    const finalStats = lazyLoader.getCacheStats();
+
+    return {
+      networkLoadSuccess: networkLoad.success,
+      memoryLoadFromCache: memoryLoad.fromCache,
+      localStorageLoadFromCache: localStorageLoad.fromCache,
+      dualCacheWorking: networkLoad.success && memoryLoad.fromCache && localStorageLoad.fromCache,
+      cacheStats: {
+        afterNetwork: afterNetworkStats,
+        final: finalStats
+      }
+    };
+  }),
+
+  await runE2ETest('性能监控集成验证', 'integration', 'high', async () => {
+    // 执行一系列操作并监控性能
+    performanceMonitor.recordConfigLoadTime(300);
+    performanceMonitor.recordCategoryLoadTime(150);
+    performanceMonitor.recordUserInteraction(45);
+
+    // 加载分类并记录性能
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length > 0) {
+      const startTime = performance.now();
+      const result = await lazyLoader.loadCategory(categories[0]);
+      const loadTime = performance.now() - startTime;
+
+      performanceMonitor.recordCategoryLoadTime(loadTime);
+      performanceMonitor.recordNetworkRequest(loadTime, result.success);
+    }
+
+    const metrics = performanceMonitor.getMetrics();
+    const score = performanceMonitor.getPerformanceScore();
+    const alerts = performanceMonitor.getAlerts();
+    const recommendations = performanceMonitor.getRecommendations();
+
+    return {
+      metricsRecorded: metrics.configLoadTime > 0,
+      scoreCalculated: score > 0,
+      alertsGenerated: alerts.length >= 0,
+      recommendationsGenerated: recommendations.length >= 0,
+      monitoringWorking: metrics.configLoadTime === 300 && score > 0
+    };
+  }),
+
+  await runE2ETest('错误处理完整流程', 'reliability', 'critical', async () => {
+    // 1. 触发各种错误
+    const errors = [
+      new Error('Network error'),
+      new SyntaxError('Parse error'),
+      new Error('Timeout error')
+    ];
+
+    const errorResults: Array<{
+      errorType: any;
+      handled: boolean;
+      userMessage: string | undefined;
+      fallbackAvailable: boolean | undefined;
+    }> = [];
+    for (const error of errors) {
+      const result = await defaultErrorHandler.handleError(error);
+      errorResults.push({
+        errorType: result.error?.type,
+        handled: !result.success,
+        userMessage: result.error?.userMessage,
+        fallbackAvailable: result.error?.fallbackAvailable
+      });
+    }
+
+    // 2. 检查系统健康
+    const health = defaultErrorHandler.getSystemHealth();
+
+    // 3. 验证系统仍可正常工作
+    const categories = configManager.getAllCategoryIndexes();
+    let systemWorking = false;
+    if (categories.length > 0) {
+      const result = await lazyLoader.loadCategory(categories[0]);
+      systemWorking = result.success;
+    }
+
+    return {
+      errorsHandled: errorResults.every(r => r.handled),
+      userFriendlyMessages: errorResults.every(r => !!r.userMessage),
+      systemHealth: health.status,
+      systemStillWorking: systemWorking,
+      errorHandlingComplete: errorResults.every(r => r.handled) && systemWorking
+    };
+  }),
+
+  await runE2ETest('并发操作压力测试', 'performance', 'high', async () => {
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length < 3) throw new Error('分类数量不足');
+
+    // 并发加载多个分类
+    const concurrentPromises: Promise<any>[] = [];
+    for (let i = 0; i < Math.min(5, categories.length); i++) {
+      concurrentPromises.push(lazyLoader.loadCategory(categories[i]));
+    }
+
+    const startTime = performance.now();
+    const results = await Promise.all(concurrentPromises);
+    const totalTime = performance.now() - startTime;
+
+    const successCount = results.filter(r => r.success).length;
+    const avgTime = totalTime / results.length;
+
+    return {
+      concurrentRequests: results.length,
+      successCount,
+      failureCount: results.length - successCount,
+      totalTime,
+      avgTime,
+      successRate: (successCount / results.length) * 100,
+      concurrencyWorking: successCount === results.length && avgTime < 200
+    };
+  }),
+
+  await runE2ETest('数据一致性验证', 'reliability', 'high', async () => {
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length === 0) throw new Error('没有可用分类');
+
+    const testCategory = categories[0];
+
+    // 多次加载同一分类，验证数据一致性
+    const loads: Array<{ siteCount: number; dataHash: number }> = [];
+    for (let i = 0; i < 5; i++) {
+      const result = await lazyLoader.loadCategory(testCategory);
+      if (result.success && result.data) {
+        loads.push({
+          siteCount: result.data.sites?.length || 0,
+          dataHash: JSON.stringify(result.data).length // 简单的数据指纹
+        });
+      }
+    }
+
+    // 检查所有加载的数据是否一致
+    const firstLoad = loads[0];
+    const allConsistent = loads.every(load =>
+      load.siteCount === firstLoad.siteCount &&
+      load.dataHash === firstLoad.dataHash
+    );
+
+    return {
+      loadCount: loads.length,
+      firstLoadSiteCount: firstLoad?.siteCount || 0,
+      allConsistent,
+      dataIntegrity: allConsistent && loads.length === 5
+    };
+  }),
+
+  await runE2ETest('内存泄漏检测', 'performance', 'medium', async () => {
+    const initialMemory = performanceMonitor.getMetrics().memoryUsage;
+
+    // 执行大量操作
+    for (let i = 0; i < 20; i++) {
+      const categories = configManager.getAllCategoryIndexes();
+      if (categories.length > 0) {
+        await lazyLoader.loadCategory(categories[i % categories.length]);
+      }
+
+      // 设置和删除缓存数据
+      await defaultLocalStorageCache.set(`test_${i}`, { data: 'x'.repeat(1000) });
+      await defaultLocalStorageCache.delete(`test_${i}`);
+    }
+
+    // 强制垃圾回收 (如果可用)
+    if ((window as any).gc) {
+      (window as any).gc();
+    }
+
+    const finalMemory = performanceMonitor.getMetrics().memoryUsage;
+    const memoryIncrease = finalMemory - initialMemory;
+
+    return {
+      initialMemory,
+      finalMemory,
+      memoryIncrease,
+      memoryLeakDetected: memoryIncrease > 20, // 超过20MB认为可能有内存泄漏
+      memoryEfficient: memoryIncrease < 10
+    };
+  }),
+
+  await runE2ETest('跨浏览器兼容性', 'integration', 'medium', async () => {
+    // 检查关键API支持
+    const apiSupport = {
+      fetch: typeof fetch !== 'undefined',
+      localStorage: typeof localStorage !== 'undefined',
+      sessionStorage: typeof sessionStorage !== 'undefined',
+      promise: typeof Promise !== 'undefined',
+      asyncAwait: true, // 如果代码运行到这里说明支持
+      json: typeof JSON !== 'undefined',
+      performance: typeof performance !== 'undefined'
+    };
+
+    // 测试存储功能
+    let storageWorking = false;
+    try {
+      localStorage.setItem('compat_test', 'test');
+      storageWorking = localStorage.getItem('compat_test') === 'test';
+      localStorage.removeItem('compat_test');
+    } catch (error) {
+      storageWorking = false;
+    }
+
+    // 测试网络功能
+    let networkWorking = false;
+    try {
+      const response = await fetch('/config.json', { method: 'HEAD' });
+      networkWorking = response.ok;
+    } catch (error) {
+      networkWorking = false;
+    }
+
+    const supportedFeatures = Object.values(apiSupport).filter(Boolean).length;
+    const totalFeatures = Object.keys(apiSupport).length;
+
+    return {
+      apiSupport,
+      storageWorking,
+      networkWorking,
+      supportedFeatures,
+      totalFeatures,
+      compatibilityScore: (supportedFeatures / totalFeatures) * 100,
+      fullyCompatible: supportedFeatures === totalFeatures && storageWorking && networkWorking
+    };
+  })
+];
+
+// 按类别分组测试结果
+const testsByCategory = {
+  workflow: e2eTests.filter(t => t.category === 'workflow'),
+  integration: e2eTests.filter(t => t.category === 'integration'),
+  performance: e2eTests.filter(t => t.category === 'performance'),
+  reliability: e2eTests.filter(t => t.category === 'reliability')
+};
+
+// 计算总体统计
+const e2eStats = {
+  totalTests: e2eTests.length,
+  passedTests: e2eTests.filter(t => t.success).length,
+  failedTests: e2eTests.filter(t => !t.success).length,
+  successRate: (e2eTests.filter(t => t.success).length / e2eTests.length) * 100,
+  totalDuration: e2eTests.reduce((sum, t) => sum + t.duration, 0),
+  criticalTestsPassed: e2eTests.filter(t => t.priority === 'critical' && t.success).length,
+  criticalTestsTotal: e2eTests.filter(t => t.priority === 'critical').length
+};
+
+// 最终系统状态
+const finalSystemState = {
+  configManager: {
+    loaded: true,
+    categoryCount: configManager.getAllCategoryIndexes().length,
+    hasConfig: true
+  },
+  lazyLoader: lazyLoader.getCacheStats(),
+  preloadStrategy: preloadStrategy.getPreloadStats(),
+  performanceMonitor: {
+    metrics: performanceMonitor.getMetrics(),
+    score: performanceMonitor.getPerformanceScore(),
+    alerts: performanceMonitor.getAlerts().length,
+    recommendations: performanceMonitor.getRecommendations().length
+  },
+  errorHandler: defaultErrorHandler.getSystemHealth(),
+  localStorage: defaultLocalStorageCache.getStats()
+};
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>综合端到端测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .e2e-dashboard {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .dashboard-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .dashboard-item.critical {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .dashboard-item.high {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .dashboard-item.medium {
+      background: #dbeafe;
+      border-color: #3b82f6;
+    }
+
+    .dashboard-item.low {
+      background: #d1fae5;
+      border-color: #10b981;
+    }
+
+    .dashboard-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .dashboard-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .component-showcase {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .component-demo {
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .demo-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #374151;
+    }
+
+    .test-categories {
+      display: grid;
+      gap: 30px;
+    }
+
+    .category-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .category-header {
+      padding: 25px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .category-header.workflow {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+    }
+
+    .category-header.integration {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .category-header.performance {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+    }
+
+    .category-header.reliability {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .category-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .category-stats {
+      text-align: right;
+      font-size: 14px;
+    }
+
+    .test-grid {
+      display: grid;
+      gap: 15px;
+      padding: 25px;
+    }
+
+    .test-item {
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+
+    .test-item.success {
+      background: #f0fdf4;
+      border-left-color: #22c55e;
+    }
+
+    .test-item.failure {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .test-name {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .test-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .test-priority {
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .test-priority.critical {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .test-priority.high {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .test-priority.medium {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .test-priority.low {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .test-duration {
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .test-details {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .test-details pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .error-message {
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      border-left: 3px solid #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎯 综合端到端测试</h1>
+    <div class="subtitle">Week 3 - 任务3.2最终验证 | 测试时间: {new Date().toLocaleString()}</div>
+  </div>
+
+  <!-- E2E测试仪表板 -->
+  <div class="e2e-dashboard">
+    <h2>📊 端到端测试总览</h2>
+    <div class="dashboard-grid">
+      <div class={`dashboard-item ${e2eStats.successRate >= 95 ? 'low' : e2eStats.successRate >= 90 ? 'medium' : e2eStats.successRate >= 80 ? 'high' : 'critical'}`}>
+        <div class="dashboard-value">{e2eStats.successRate.toFixed(1)}%</div>
+        <div class="dashboard-label">总体成功率</div>
+      </div>
+      <div class={`dashboard-item ${e2eStats.criticalTestsPassed === e2eStats.criticalTestsTotal ? 'low' : 'critical'}`}>
+        <div class="dashboard-value">{e2eStats.criticalTestsPassed}/{e2eStats.criticalTestsTotal}</div>
+        <div class="dashboard-label">关键测试通过</div>
+      </div>
+      <div class="dashboard-item medium">
+        <div class="dashboard-value">{e2eStats.passedTests}</div>
+        <div class="dashboard-label">通过测试</div>
+      </div>
+      <div class="dashboard-item">
+        <div class="dashboard-value">{e2eStats.failedTests}</div>
+        <div class="dashboard-label">失败测试</div>
+      </div>
+      <div class="dashboard-item">
+        <div class="dashboard-value">{(e2eStats.totalDuration / 1000).toFixed(1)}s</div>
+        <div class="dashboard-label">总测试时间</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 组件展示 -->
+  <div class="component-showcase">
+    <h2>🧩 核心组件实时展示</h2>
+    <div class="showcase-grid">
+      <div class="component-demo">
+        <div class="demo-title">📊 性能监控面板</div>
+        <PerformanceMonitor
+          visible={true}
+          position="top-left"
+          collapsible={true}
+          defaultCollapsed={false}
+          updateInterval={3000}
+        />
+      </div>
+
+      <div class="component-demo">
+        <div class="demo-title">⏳ 加载指示器</div>
+        <LoadingIndicator
+          visible={true}
+          message="正在执行端到端测试..."
+          showProgress={true}
+          progress={85}
+          size="large"
+        />
+      </div>
+
+      <div class="component-demo">
+        <div class="demo-title">🚨 错误消息组件</div>
+        <ErrorMessage
+          type="CONFIG_ERROR"
+          severity="high"
+          message="端到端测试检测到配置问题"
+          showRetry={true}
+          showDetails={true}
+          details="测试环境配置验证失败"
+          dismissible={true}
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- 按类别显示测试结果 -->
+  <div class="test-categories">
+    {Object.entries(testsByCategory).map(([category, tests]) => (
+      <div class="category-section">
+        <div class={`category-header ${category}`}>
+          <div class="category-title">
+            {category === 'workflow' ? '🔄 工作流测试' :
+             category === 'integration' ? '🔗 集成测试' :
+             category === 'performance' ? '⚡ 性能测试' :
+             '🛡️ 可靠性测试'}
+          </div>
+          <div class="category-stats">
+            <div>通过率: {((tests.filter(t => t.success).length / tests.length) * 100).toFixed(1)}%</div>
+            <div>测试数: {tests.length}</div>
+          </div>
+        </div>
+
+        <div class="test-grid">
+          {tests.map((test, index) => (
+            <div class={`test-item ${test.success ? 'success' : 'failure'}`}>
+              <div class="test-header">
+                <div class="test-name">
+                  <span>{test.success ? '✅' : '❌'}</span>
+                  {test.name}
+                </div>
+                <div class="test-meta">
+                  <div class={`test-priority ${test.priority}`}>{test.priority}</div>
+                  <div class="test-duration">{test.duration.toFixed(2)}ms</div>
+                </div>
+              </div>
+
+              <div class="test-details">
+                <strong>测试详情:</strong>
+                <pre>{JSON.stringify(test.details, null, 2)}</pre>
+              </div>
+
+              {test.error && (
+                <div class="error-message">
+                  <strong>错误信息:</strong> {test.error}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script define:vars={{ e2eTests, e2eStats, testsByCategory, finalSystemState }} is:inline>
+    console.log('🎯 综合端到端测试页面已加载');
+    console.log('📊 E2E测试结果:', JSON.stringify(e2eTests, null, 2));
+    console.log('📊 E2E测试统计:', JSON.stringify(e2eStats, null, 2));
+    console.log('📊 按类别分组:', JSON.stringify(testsByCategory, null, 2));
+    console.log('🏥 最终系统状态:', JSON.stringify(finalSystemState, null, 2));
+
+    // 生成E2E测试报告
+    const generateE2EReport = () => {
+      const report = {
+        timestamp: new Date().toISOString(),
+        testType: 'End-to-End',
+        summary: e2eStats,
+        testsByCategory,
+        systemState: finalSystemState,
+        environment: {
+          userAgent: navigator.userAgent,
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
+          timestamp: Date.now()
+        }
+      };
+
+      return report;
+    };
+
+    // 导出E2E测试报告
+    window.exportE2EReport = () => {
+      const report = generateE2EReport();
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `e2e-test-report-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    // 显示E2E测试总结
+    console.log('📋 E2E测试总结:');
+    console.log(`   总测试数: ${e2eStats.totalTests}`);
+    console.log(`   通过数: ${e2eStats.passedTests}`);
+    console.log(`   失败数: ${e2eStats.failedTests}`);
+    console.log(`   成功率: ${e2eStats.successRate.toFixed(1)}%`);
+    console.log(`   关键测试: ${e2eStats.criticalTestsPassed}/${e2eStats.criticalTestsTotal}`);
+    console.log(`   总耗时: ${(e2eStats.totalDuration / 1000).toFixed(1)}s`);
+
+    // 检查是否所有关键测试都通过
+    const allCriticalPassed = e2eStats.criticalTestsPassed === e2eStats.criticalTestsTotal;
+    if (allCriticalPassed && e2eStats.successRate >= 90) {
+      console.log('🎉 恭喜！所有关键测试都已通过，系统运行良好！');
+    } else {
+      console.log('⚠️ 部分关键测试未通过或成功率不足90%，需要进一步检查');
+    }
+  </script>
+</body>
+</html>

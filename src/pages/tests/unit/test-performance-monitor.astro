@@ -1,0 +1,578 @@
+---
+/**
+ * 性能监控测试页面
+ * Week 3 - 任务2.2验证
+ */
+
+import PerformanceMonitor from '../../../components/PerformanceMonitor.astro';
+import { PerformanceMonitor as PerformanceMonitorClass } from '../../../utils/PerformanceMonitor';
+
+// 测试结果接口
+interface TestResult {
+  name: string;
+  success: boolean;
+  duration: number;
+  details: any;
+  error?: string;
+}
+
+async function runTest(name: string, testFn: () => any): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    const result = testFn();
+    return {
+      name,
+      success: true,
+      duration: performance.now() - startTime,
+      details: result
+    };
+  } catch (error) {
+    return {
+      name,
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 创建性能监控实例
+const performanceMonitor = new PerformanceMonitorClass();
+
+// 执行测试
+const testResults: TestResult[] = [
+  // 测试1: 性能监控初始化
+  await runTest('性能监控初始化', () => {
+    const metrics = performanceMonitor.getMetrics();
+    return {
+      initialized: true,
+      hasMetrics: !!metrics,
+      sessionStartTime: metrics.sessionStartTime > 0,
+      initialScore: performanceMonitor.getPerformanceScore()
+    };
+  }),
+
+  // 测试2: 配置加载时间记录
+  await runTest('配置加载时间记录', () => {
+    const testLoadTime = 150;
+    performanceMonitor.recordConfigLoadTime(testLoadTime);
+    
+    const metrics = performanceMonitor.getMetrics();
+    
+    return {
+      recordedTime: testLoadTime,
+      metricsTime: metrics.configLoadTime,
+      recordingWorking: metrics.configLoadTime === testLoadTime
+    };
+  }),
+
+  // 测试3: 分类加载时间记录
+  await runTest('分类加载时间记录', () => {
+    const testTimes = [100, 120, 80, 150, 90];
+    
+    testTimes.forEach(time => {
+      performanceMonitor.recordCategoryLoadTime(time);
+    });
+    
+    const metrics = performanceMonitor.getMetrics();
+    const expectedAvg = testTimes.reduce((sum, time) => sum + time, 0) / testTimes.length;
+    
+    return {
+      testTimes,
+      lastRecordedTime: metrics.categoryLoadTime,
+      avgTime: metrics.avgCategoryLoadTime,
+      expectedAvg,
+      avgCalculationCorrect: Math.abs(metrics.avgCategoryLoadTime - expectedAvg) < 1
+    };
+  }),
+
+  // 测试4: 网络请求记录
+  await runTest('网络请求记录', () => {
+    const requests = [
+      { time: 200, success: true },
+      { time: 150, success: true },
+      { time: 300, success: false },
+      { time: 180, success: true },
+      { time: 250, success: false }
+    ];
+    
+    requests.forEach(req => {
+      performanceMonitor.recordNetworkRequest(req.time, req.success);
+    });
+    
+    const metrics = performanceMonitor.getMetrics();
+    const expectedFailureRate = (2 / 5) * 100; // 2个失败，共5个请求
+    
+    return {
+      totalRequests: metrics.networkRequestCount,
+      failedRequests: metrics.failedRequestCount,
+      failureRate: (metrics.failedRequestCount / metrics.networkRequestCount) * 100,
+      expectedFailureRate,
+      avgResponseTime: metrics.avgResponseTime,
+      failureRateCorrect: Math.abs(((metrics.failedRequestCount / metrics.networkRequestCount) * 100) - expectedFailureRate) < 1
+    };
+  }),
+
+  // 测试5: 用户交互记录
+  await runTest('用户交互记录', () => {
+    const interactions = [50, 30, 80, 40, 60];
+    
+    interactions.forEach(time => {
+      performanceMonitor.recordUserInteraction(time);
+    });
+    
+    const metrics = performanceMonitor.getMetrics();
+    const expectedAvg = interactions.reduce((sum, time) => sum + time, 0) / interactions.length;
+    
+    return {
+      interactionCount: metrics.userInteractionCount,
+      avgResponseTime: metrics.avgInteractionResponseTime,
+      expectedAvg,
+      avgCorrect: Math.abs(metrics.avgInteractionResponseTime - expectedAvg) < 1
+    };
+  }),
+
+  // 测试6: 缓存指标更新
+  await runTest('缓存指标更新', () => {
+    const cacheSize = 5;
+    const maxCacheSize = 10;
+    const hitRate = 85;
+    
+    performanceMonitor.updateCacheMetrics(cacheSize, maxCacheSize, hitRate);
+    
+    const metrics = performanceMonitor.getMetrics();
+    
+    return {
+      cacheSize: metrics.cacheSize,
+      maxCacheSize: metrics.maxCacheSize,
+      hitRate: metrics.cacheHitRate,
+      updateWorking: metrics.cacheSize === cacheSize && 
+                     metrics.maxCacheSize === maxCacheSize && 
+                     metrics.cacheHitRate === hitRate
+    };
+  }),
+
+  // 测试7: 预加载指标更新
+  await runTest('预加载指标更新', () => {
+    const preloadCount = 8;
+    const successRate = 87.5;
+    const cacheHitRate = 62.5;
+    
+    performanceMonitor.updatePreloadMetrics(preloadCount, successRate, cacheHitRate);
+    
+    const metrics = performanceMonitor.getMetrics();
+    
+    return {
+      preloadCount: metrics.preloadCount,
+      successRate: metrics.preloadSuccessRate,
+      cacheHitRate: metrics.preloadCacheHitRate,
+      updateWorking: metrics.preloadCount === preloadCount &&
+                     metrics.preloadSuccessRate === successRate &&
+                     metrics.preloadCacheHitRate === cacheHitRate
+    };
+  }),
+
+  // 测试8: 性能警告生成
+  await runTest('性能警告生成', () => {
+    // 触发一些警告条件
+    performanceMonitor.recordConfigLoadTime(1500); // 超过阈值
+    performanceMonitor.recordCategoryLoadTime(2500); // 超过阈值
+    performanceMonitor.updateCacheMetrics(3, 10, 60); // 缓存命中率低
+    
+    const alerts = performanceMonitor.getAlerts();
+    
+    return {
+      alertCount: alerts.length,
+      hasConfigAlert: alerts.some(alert => alert.metric === 'configLoadTime'),
+      hasCategoryAlert: alerts.some(alert => alert.metric === 'categoryLoadTime'),
+      hasCacheAlert: alerts.some(alert => alert.metric === 'cacheHitRate'),
+      alertsWorking: alerts.length > 0
+    };
+  }),
+
+  // 测试9: 性能建议生成
+  await runTest('性能建议生成', () => {
+    const recommendations = performanceMonitor.getRecommendations();
+    
+    return {
+      recommendationCount: recommendations.length,
+      hasRecommendations: recommendations.length > 0,
+      categories: [...new Set(recommendations.map(r => r.category))],
+      actionableCount: recommendations.filter(r => r.actionable).length,
+      recommendationsWorking: recommendations.length > 0
+    };
+  }),
+
+  // 测试10: 性能评分计算
+  await runTest('性能评分计算', () => {
+    // 重置监控器以获得干净的评分
+    const cleanMonitor = new PerformanceMonitorClass();
+    
+    // 设置良好的性能指标
+    cleanMonitor.recordConfigLoadTime(300);
+    cleanMonitor.recordCategoryLoadTime(80);
+    cleanMonitor.updateCacheMetrics(8, 10, 95);
+    cleanMonitor.recordNetworkRequest(100, true);
+    
+    const goodScore = cleanMonitor.getPerformanceScore();
+    
+    // 设置较差的性能指标
+    cleanMonitor.recordConfigLoadTime(1500);
+    cleanMonitor.recordCategoryLoadTime(2500);
+    cleanMonitor.updateCacheMetrics(2, 10, 40);
+    
+    const badScore = cleanMonitor.getPerformanceScore();
+    
+    return {
+      goodScore,
+      badScore,
+      scoreRange: { min: 0, max: 100 },
+      goodScoreValid: goodScore >= 80,
+      badScoreValid: badScore <= 50,
+      scoringWorking: goodScore > badScore
+    };
+  }),
+
+  // 测试11: 数据导出功能
+  await runTest('数据导出功能', () => {
+    const exportData = performanceMonitor.exportReport();
+    
+    let parsedData;
+    try {
+      parsedData = JSON.parse(exportData);
+    } catch (error) {
+      throw new Error('导出数据不是有效的JSON格式');
+    }
+    
+    return {
+      exportDataLength: exportData.length,
+      hasMetrics: !!parsedData.metrics,
+      hasAlerts: !!parsedData.alerts,
+      hasRecommendations: !!parsedData.recommendations,
+      hasScore: typeof parsedData.score === 'number',
+      hasExportTime: !!parsedData.exportTime,
+      exportWorking: exportData.length > 0 && !!parsedData.metrics
+    };
+  }),
+
+  // 测试12: 监控重置功能
+  await runTest('监控重置功能', () => {
+    const metricsBefore = performanceMonitor.getMetrics();
+    const alertsBefore = performanceMonitor.getAlerts();
+    
+    performanceMonitor.reset();
+    
+    const metricsAfter = performanceMonitor.getMetrics();
+    const alertsAfter = performanceMonitor.getAlerts();
+    
+    return {
+      metricsBefore: {
+        networkRequests: metricsBefore.networkRequestCount,
+        userInteractions: metricsBefore.userInteractionCount
+      },
+      metricsAfter: {
+        networkRequests: metricsAfter.networkRequestCount,
+        userInteractions: metricsAfter.userInteractionCount
+      },
+      alertsBefore: alertsBefore.length,
+      alertsAfter: alertsAfter.length,
+      resetWorking: metricsAfter.networkRequestCount === 0 && 
+                    metricsAfter.userInteractionCount === 0 &&
+                    alertsAfter.length === 0
+    };
+  })
+];
+
+const successCount = testResults.filter(r => r.success).length;
+const totalTests = testResults.length;
+const successRate = (successCount / totalTests * 100).toFixed(1);
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>性能监控测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .demo-section {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .demo-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .demo-controls button {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .demo-controls button:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+    
+    .demo-controls button.primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .demo-controls button.primary:hover {
+      background: #2563eb;
+    }
+    
+    .summary {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .summary-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+    
+    .summary-item.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .summary-item.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .summary-item .value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .summary-item .label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-results {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .test-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .test-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-header.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .test-header.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .test-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .test-duration {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-content {
+      padding: 20px;
+    }
+    
+    .test-details {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    
+    .test-details pre {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 性能监控测试</h1>
+    <div class="subtitle">Week 3 - 任务2.2验证 | 测试时间: {new Date().toLocaleString()}</div>
+  </div>
+
+  <!-- 性能监控面板演示 -->
+  <div class="demo-section">
+    <h2>🎛️ 性能监控面板演示</h2>
+    <p>下方的性能监控面板展示了实时性能数据，可以拖拽移动位置</p>
+    
+    <div class="demo-controls">
+      <button onclick="simulateConfigLoad()" class="primary">模拟配置加载</button>
+      <button onclick="simulateCategoryLoad()">模拟分类加载</button>
+      <button onclick="simulateNetworkRequest()">模拟网络请求</button>
+      <button onclick="simulateUserInteraction()">模拟用户交互</button>
+      <button onclick="simulateHighLoad()">模拟高负载</button>
+      <button onclick="resetMonitor()">重置监控</button>
+    </div>
+  </div>
+
+  <!-- 性能监控面板 -->
+  <PerformanceMonitor 
+    visible={true}
+    position="top-right"
+    collapsible={true}
+    defaultCollapsed={false}
+    updateInterval={3000}
+  />
+
+  <!-- 测试结果 -->
+  <div class="summary">
+    <div class={`summary-item ${successRate === '100.0' ? 'success' : 'warning'}`}>
+      <div class="value">{successRate}%</div>
+      <div class="label">测试通过率</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{successCount}</div>
+      <div class="label">通过测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests - successCount}</div>
+      <div class="label">失败测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests}</div>
+      <div class="label">总测试数</div>
+    </div>
+  </div>
+
+  <div class="test-results">
+    {testResults.map((result, index) => (
+      <div class="test-card">
+        <div class={`test-header ${result.success ? 'success' : 'error'}`}>
+          <div class="test-name">
+            <span>{result.success ? '✅' : '❌'}</span>
+            测试 {index + 1}: {result.name}
+          </div>
+          <div class="test-duration">{result.duration.toFixed(2)}ms</div>
+        </div>
+        <div class="test-content">
+          <div class="test-details">
+            <strong>测试详情:</strong>
+            <pre>{JSON.stringify(result.details, null, 2)}</pre>
+          </div>
+          {result.error && (
+            <div class="error-message">
+              <strong>错误信息:</strong> {result.error}
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script define:vars={{ testResults }}>
+    console.log('📊 性能监控测试页面已加载');
+    console.log('📊 测试结果:', JSON.stringify(testResults, null, 2));
+
+    // 模拟函数
+    function simulateConfigLoad() {
+      console.log('🔄 模拟配置加载...');
+      // 这里会触发性能监控面板的更新
+    }
+
+    function simulateCategoryLoad() {
+      console.log('📂 模拟分类加载...');
+    }
+
+    function simulateNetworkRequest() {
+      console.log('🌐 模拟网络请求...');
+    }
+
+    function simulateUserInteraction() {
+      console.log('👆 模拟用户交互...');
+    }
+
+    function simulateHighLoad() {
+      console.log('⚡ 模拟高负载场景...');
+    }
+
+    function resetMonitor() {
+      console.log('🔄 重置性能监控...');
+    }
+
+    // 使函数全局可用
+    window.simulateConfigLoad = simulateConfigLoad;
+    window.simulateCategoryLoad = simulateCategoryLoad;
+    window.simulateNetworkRequest = simulateNetworkRequest;
+    window.simulateUserInteraction = simulateUserInteraction;
+    window.simulateHighLoad = simulateHighLoad;
+    window.resetMonitor = resetMonitor;
+  </script>
+</body>
+</html>

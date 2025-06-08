@@ -1,0 +1,120 @@
+{
+  "menuItems": [
+    {
+      "name": "开发工具",
+      "categoryIndex": 0,
+      "siteCount": 8,
+      "previewSites": [
+        {
+          "title": "GitHub",
+          "description": "全球最大的代码托管平台"
+        },
+        {
+          "title": "VS Code",
+          "description": "微软开发的免费代码编辑器"
+        },
+        {
+          "title": "Stack Overflow",
+          "description": "程序员问答社区"
+        }
+      ]
+    },
+    {
+      "name": "设计资源",
+      "categoryIndex": 1,
+      "siteCount": 6,
+      "previewSites": [
+        {
+          "title": "Figma",
+          "description": "在线协作设计工具"
+        },
+        {
+          "title": "Dribbble",
+          "description": "设计师作品展示平台"
+        }
+      ]
+    },
+    {
+      "name": "学习平台",
+      "categoryIndex": 2,
+      "siteCount": 10,
+      "previewSites": [
+        {
+          "title": "MDN Web Docs",
+          "description": "Web开发权威文档"
+        },
+        {
+          "title": "freeCodeCamp",
+          "description": "免费编程学习平台"
+        },
+        {
+          "title": "Coursera",
+          "description": "在线课程平台"
+        }
+      ]
+    },
+    {
+      "name": "工具软件",
+      "categoryIndex": 3,
+      "siteCount": 12,
+      "previewSites": [
+        {
+          "title": "Notion",
+          "description": "全能笔记和协作工具"
+        },
+        {
+          "title": "Slack",
+          "description": "团队沟通协作平台"
+        }
+      ]
+    },
+    {
+      "name": "云服务",
+      "categoryIndex": 4,
+      "siteCount": 7,
+      "previewSites": [
+        {
+          "title": "AWS",
+          "description": "亚马逊云计算服务"
+        },
+        {
+          "title": "Vercel",
+          "description": "前端部署平台"
+        },
+        {
+          "title": "Netlify",
+          "description": "静态网站托管服务"
+        }
+      ]
+    }
+  ],
+  "optimization": {
+    "totalCategories": 5,
+    "totalSites": 43,
+    "compressionRatio": 0.95,
+    "splitFiles": true,
+    "version": "2.0",
+    "generatedAt": "2024-12-07T12:00:00.000Z",
+    "metadata": {
+      "originalSize": 33271,
+      "optimizedSize": 1588,
+      "compressionDetails": {
+        "configFile": {
+          "originalSize": 33271,
+          "optimizedSize": 1588,
+          "ratio": 0.95
+        },
+        "categoryFiles": {
+          "totalFiles": 5,
+          "avgFileSize": 2.1,
+          "totalSize": 10.5
+        }
+      },
+      "performance": {
+        "loadTime": 14,
+        "detectionTime": 2,
+        "conversionTime": 8
+      }
+    }
+  }
+}

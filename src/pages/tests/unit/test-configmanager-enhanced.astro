@@ -1,0 +1,411 @@
+---
+/**
+ * ConfigManager增强功能测试页面
+ * Week 3 - 任务1.1验证
+ */
+
+// 导入增强后的ConfigManager
+import {
+  loadOptimizedConfig,
+  loadCategoryData,
+  getCategoryInfo,
+  getAllCategoryIndexes,
+  isOptimizedMode
+} from '../../../utils/ConfigManager';
+
+// 测试结果接口
+interface TestResult {
+  name: string;
+  success: boolean;
+  duration: number;
+  details: any;
+  error?: string;
+}
+
+const testResults: TestResult[] = [];
+
+// 测试1: 加载优化配置
+async function test1_LoadOptimizedConfig(): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    console.log('🧪 测试1: 加载优化配置');
+    const result = await loadOptimizedConfig();
+    const duration = performance.now() - startTime;
+    
+    return {
+      name: '加载优化配置',
+      success: result.success,
+      duration,
+      details: {
+        isOptimized: result.isOptimized,
+        totalCategories: result.config?.optimization?.totalCategories,
+        totalSites: result.config?.optimization?.totalSites,
+        compressionRatio: result.config?.optimization?.compressionRatio,
+        configExists: !!result.config
+      },
+      error: result.error
+    };
+  } catch (error) {
+    return {
+      name: '加载优化配置',
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 测试2: 获取所有分类索引
+async function test2_GetAllCategoryIndexes(): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    console.log('🧪 测试2: 获取所有分类索引');
+    const indexes = getAllCategoryIndexes();
+    const duration = performance.now() - startTime;
+    
+    return {
+      name: '获取所有分类索引',
+      success: Array.isArray(indexes) && indexes.length > 0,
+      duration,
+      details: {
+        indexes,
+        count: indexes.length,
+        isOptimizedMode: isOptimizedMode()
+      }
+    };
+  } catch (error) {
+    return {
+      name: '获取所有分类索引',
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 测试3: 获取分类信息
+async function test3_GetCategoryInfo(): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    console.log('🧪 测试3: 获取分类信息');
+    const indexes = getAllCategoryIndexes();
+    const firstIndex = indexes[0] || 0;
+    const categoryInfo = getCategoryInfo(firstIndex);
+    const duration = performance.now() - startTime;
+    
+    return {
+      name: '获取分类信息',
+      success: categoryInfo !== null,
+      duration,
+      details: {
+        categoryIndex: firstIndex,
+        categoryInfo,
+        hasName: !!categoryInfo?.name,
+        hasSiteCount: typeof categoryInfo?.siteCount === 'number',
+        hasPreviewSites: Array.isArray(categoryInfo?.previewSites)
+      }
+    };
+  } catch (error) {
+    return {
+      name: '获取分类信息',
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 测试4: 加载分类数据
+async function test4_LoadCategoryData(): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    console.log('🧪 测试4: 加载分类数据');
+    const indexes = getAllCategoryIndexes();
+    const firstIndex = indexes[0] || 0;
+    const result = await loadCategoryData(firstIndex);
+    const duration = performance.now() - startTime;
+    
+    return {
+      name: '加载分类数据',
+      success: result.success,
+      duration,
+      details: {
+        categoryIndex: firstIndex,
+        success: result.success,
+        fromCache: result.fromCache,
+        loadTime: result.loadTime,
+        dataExists: !!result.data,
+        siteCount: result.data?.sites?.length,
+        categoryName: result.data?.categoryName
+      },
+      error: result.error
+    };
+  } catch (error) {
+    return {
+      name: '加载分类数据',
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 执行所有测试
+async function runAllTests() {
+  console.log('🚀 开始ConfigManager增强功能测试...');
+  
+  testResults.push(await test1_LoadOptimizedConfig());
+  testResults.push(await test2_GetAllCategoryIndexes());
+  testResults.push(await test3_GetCategoryInfo());
+  testResults.push(await test4_LoadCategoryData());
+  
+  console.log('✅ 所有测试完成');
+  return testResults;
+}
+
+// 执行测试
+const results = await runAllTests();
+const successCount = results.filter(r => r.success).length;
+const totalTests = results.length;
+const successRate = (successCount / totalTests * 100).toFixed(1);
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConfigManager增强功能测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      color: #2c3e50;
+      margin: 0 0 10px 0;
+    }
+    
+    .header .subtitle {
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+    
+    .summary {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .summary-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+    
+    .summary-item.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .summary-item.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .summary-item.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .summary-item .value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .summary-item .label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-results {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .test-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .test-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-header.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .test-header.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .test-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .test-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .test-duration {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-content {
+      padding: 20px;
+    }
+    
+    .test-details {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    
+    .test-details pre {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #dc3545;
+    }
+    
+    .status-icon {
+      font-size: 20px;
+    }
+    
+    .refresh-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    
+    .refresh-btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🧪 ConfigManager增强功能测试</h1>
+    <div class="subtitle">Week 3 - 任务1.1验证 | 测试时间: {new Date().toLocaleString()}</div>
+  </div>
+
+  <div class="summary">
+    <div class={`summary-item ${successRate === '100.0' ? 'success' : successRate === '0.0' ? 'error' : 'warning'}`}>
+      <div class="value">{successRate}%</div>
+      <div class="label">成功率</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{successCount}</div>
+      <div class="label">成功测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests - successCount}</div>
+      <div class="label">失败测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests}</div>
+      <div class="label">总测试数</div>
+    </div>
+  </div>
+
+  <div class="test-results">
+    {results.map((result, index) => (
+      <div class="test-card">
+        <div class={`test-header ${result.success ? 'success' : 'error'}`}>
+          <div class="test-name">
+            <span class="status-icon">{result.success ? '✅' : '❌'}</span>
+            测试 {index + 1}: {result.name}
+          </div>
+          <div class="test-status">
+            <span class="test-duration">{result.duration.toFixed(2)}ms</span>
+          </div>
+        </div>
+        <div class="test-content">
+          <div class="test-details">
+            <strong>测试详情:</strong>
+            <pre>{JSON.stringify(result.details, null, 2)}</pre>
+          </div>
+          {result.error && (
+            <div class="error-message">
+              <strong>错误信息:</strong> {result.error}
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div style="text-align: center;">
+    <button class="refresh-btn" onclick="window.location.reload()">
+      🔄 重新测试
+    </button>
+  </div>
+
+  <script define:vars={{ results }}>
+    console.log('🧪 ConfigManager增强功能测试页面已加载');
+    console.log('📊 测试结果:', JSON.stringify(results, null, 2));
+  </script>
+</body>
+</html>

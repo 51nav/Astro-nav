@@ -1,0 +1,38 @@
+{
+  "categoryId": 10,
+  "categoryName": "广告论坛",
+  "sites": [
+    {
+      "title": "Warriorforum",
+      "description": "勇士论坛",
+      "url": "https://warriorforum.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "STM Forum",
+      "description": "号称高端网络营销论坛, 需要付费",
+      "url": "https://stmforum.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

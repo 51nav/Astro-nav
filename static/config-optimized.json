@@ -1,0 +1,133 @@
+{
+  "site": {
+    "title": "Affiliate导航",
+    "description": "专业的Affiliate营销导航网站",
+    "logo": {
+      "text": "Affiliate导航"
+    }
+  },
+  "menuItems": [
+    {
+      "name": "追踪系统",
+      "icon": "mdi:chart-line",
+      "categoryIndex": 0
+    },
+    {
+      "name": "SPY服务",
+      "icon": "mdi:eye",
+      "categoryIndex": 1
+    },
+    {
+      "name": "流量平台",
+      "icon": "mdi:traffic-light",
+      "categoryIndex": null,
+      "submenu": [
+        {
+          "name": "PoP流量",
+          "icon": "mdi:popup",
+          "categoryIndex": 2
+        },
+        {
+          "name": "原生广告流量",
+          "icon": "mdi:newspaper",
+          "categoryIndex": 3
+        },
+        {
+          "name": "Push流量",
+          "icon": "mdi:bell",
+          "categoryIndex": 4
+        },
+        {
+          "name": "社交流量",
+          "icon": "mdi:account-group",
+          "categoryIndex": 5
+        },
+        {
+          "name": "搜索流量",
+          "icon": "mdi:magnify",
+          "categoryIndex": 6
+        },
+        {
+          "name": "Adult流量",
+          "icon": "mdi:alert-circle",
+          "categoryIndex": 7
+        }
+      ]
+    },
+    {
+      "name": "综合性联盟",
+      "icon": "mdi:handshake",
+      "categoryIndex": 8
+    },
+    {
+      "name": "CPA联盟",
+      "icon": "mdi:currency-usd",
+      "categoryIndex": 9
+    },
+    {
+      "name": "广告论坛",
+      "icon": "mdi:forum",
+      "categoryIndex": 10
+    },
+    {
+      "name": "SEO工具",
+      "icon": "mdi:search-web",
+      "categoryIndex": 11
+    },
+    {
+      "name": "邮件营销",
+      "icon": "mdi:email",
+      "categoryIndex": 12
+    },
+    {
+      "name": "电商平台",
+      "icon": "mdi:shopping",
+      "categoryIndex": 13
+    },
+    {
+      "name": "联盟后台",
+      "icon": "mdi:view-dashboard",
+      "categoryIndex": 14
+    },
+    {
+      "name": "域名注册",
+      "icon": "mdi:web",
+      "categoryIndex": 15
+    },
+    {
+      "name": "云服务器",
+      "icon": "mdi:server",
+      "categoryIndex": 16
+    },
+    {
+      "name": "独立服务器",
+      "icon": "mdi:server-network",
+      "categoryIndex": 17
+    },
+    {
+      "name": "支付服务",
+      "icon": "mdi:credit-card",
+      "categoryIndex": 18
+    },
+    {
+      "name": "VPS代理",
+      "icon": "mdi:server-network",
+      "categoryIndex": 19
+    },
+    {
+      "name": "落地页工具",
+      "icon": "mdi:tools",
+      "categoryIndex": 20
+    }
+  ],
+  "optimization": {
+    "enabled": true,
+    "version": "2.0",
+    "totalCategories": 21,
+    "totalSites": 75,
+    "originalSizeKB": 38,
+    "optimizedSizeKB": 2,
+    "compressionRatio": 80,
+    "generatedAt": "2025-06-07T20:00:46.893Z"
+  }
+}

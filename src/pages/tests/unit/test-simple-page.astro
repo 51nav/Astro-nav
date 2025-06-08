@@ -1,0 +1,345 @@
+---
+// 简化的测试页面 - 纯JavaScript，无TypeScript错误
+export const prerender = false;
+---
+
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简化测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 简化测试页面</h1>
+        <p>测试JavaScript基本功能和懒加载</p>
+
+        <!-- 基础测试 -->
+        <div class="test-section">
+            <h2>🔧 基础功能测试</h2>
+            <button class="test-button" onclick="testBasic()">🎯 基础测试</button>
+            <div id="basicResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 配置文件测试 -->
+        <div class="test-section">
+            <h2>📄 配置文件测试</h2>
+            <select id="configSelect">
+                <option value="/config.json">优化配置 (config.json)</option>
+                <option value="/config-traditional.json">传统配置 (config-traditional.json)</option>
+            </select>
+            <br>
+            <button class="test-button" onclick="testConfig()">📋 测试配置</button>
+            <div id="configResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 分类文件测试 -->
+        <div class="test-section">
+            <h2>📁 分类文件测试</h2>
+            <select id="categorySelect">
+                <option value="0">分类 0</option>
+                <option value="1">分类 1</option>
+                <option value="2">分类 2</option>
+                <option value="3">分类 3</option>
+                <option value="4">分类 4</option>
+                <option value="5">分类 5</option>
+            </select>
+            <br>
+            <button class="test-button" onclick="testCategory()">📂 测试分类</button>
+            <div id="categoryResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 网络监控 -->
+        <div class="test-section">
+            <h2>🌐 网络请求监控</h2>
+            <button class="test-button" onclick="clearLog()">🗑️ 清空日志</button>
+            <div id="networkLog" class="result info" style="display: block;">
+                <strong>网络请求日志:</strong>
+                <div id="logContent">暂无请求</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 网络请求日志
+        var requestLog = [];
+
+        // 监控fetch请求
+        var originalFetch = window.fetch;
+        window.fetch = function() {
+            var args = Array.prototype.slice.call(arguments);
+            var url = args[0];
+            var startTime = Date.now();
+
+            logRequest(url, 'pending', startTime);
+
+            return originalFetch.apply(this, args)
+                .then(function(response) {
+                    var endTime = Date.now();
+                    var duration = endTime - startTime;
+                    logRequest(url, response.ok ? 'success' : 'error', startTime, duration, response.status);
+                    return response;
+                })
+                .catch(function(error) {
+                    var endTime = Date.now();
+                    var duration = endTime - startTime;
+                    logRequest(url, 'error', startTime, duration, 0, error.message);
+                    throw error;
+                });
+        };
+
+        // 记录请求
+        function logRequest(url, status, startTime, duration, statusCode, error) {
+            const logEntry = {
+                url: url,
+                status: status,
+                startTime: startTime,
+                duration: duration || 0,
+                statusCode: statusCode || 0,
+                error: error || ''
+            };
+            
+            requestLog.push(logEntry);
+            updateLogDisplay();
+        }
+
+        // 更新日志显示
+        function updateLogDisplay() {
+            const logDiv = document.getElementById('logContent');
+            if (!logDiv) return;
+
+            if (requestLog.length === 0) {
+                logDiv.textContent = '暂无请求';
+                return;
+            }
+
+            const logText = requestLog.map(entry => {
+                const status = entry.status === 'success' ? '✅' : 
+                             entry.status === 'error' ? '❌' : '⏳';
+                const time = entry.duration > 0 ? `${entry.duration}ms` : 'pending';
+                const code = entry.statusCode > 0 ? `[${entry.statusCode}]` : '';
+                const error = entry.error ? ` (${entry.error})` : '';
+                
+                return `${status} ${entry.url} - ${time} ${code}${error}`;
+            }).join('\n');
+
+            logDiv.textContent = logText;
+        }
+
+        // 清空日志
+        function clearLog() {
+            requestLog = [];
+            updateLogDisplay();
+            console.log('🗑️ 网络日志已清空');
+        }
+
+        // 基础测试
+        function testBasic() {
+            console.log('🧪 开始基础测试...');
+            const resultDiv = document.getElementById('basicResult');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result success';
+                
+                let result = '🎉 基础测试成功！\n\n';
+                result += '测试项目:\n';
+                result += '✅ JavaScript执行正常\n';
+                result += '✅ DOM操作正常\n';
+                result += '✅ 事件绑定正常\n';
+                result += '✅ 控制台输出正常\n';
+                result += '✅ 网络监控正常\n\n';
+                result += `当前时间: ${new Date().toLocaleString()}\n`;
+                result += `用户代理: ${navigator.userAgent.substring(0, 50)}...`;
+                
+                resultDiv.textContent = result;
+                console.log('✅ 基础测试完成');
+                
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 基础测试失败:\n${error.message}`;
+                console.error('❌ 基础测试失败:', error);
+            }
+        }
+
+        // 测试配置文件
+        async function testConfig() {
+            console.log('📄 开始配置文件测试...');
+            const resultDiv = document.getElementById('configResult');
+            const select = document.getElementById('configSelect');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '🔄 正在加载配置文件...';
+                
+                const configPath = select.value;
+                console.log(`📋 加载配置: ${configPath}`);
+                
+                const response = await fetch(configPath);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const config = await response.json();
+                
+                let result = '📄 配置文件测试成功！\n\n';
+                result += `配置文件: ${configPath}\n`;
+                result += `文件大小: ${JSON.stringify(config).length} 字符\n`;
+                result += `网站标题: ${config.site?.title || '未设置'}\n`;
+                result += `菜单数量: ${config.menuItems?.length || 0}\n`;
+                
+                // 检查优化格式特征
+                const hasOptimization = config.optimization && config.optimization.enabled;
+                const hasCategoryIndex = config.menuItems && config.menuItems.some(item => 
+                    typeof item.categoryIndex === 'number'
+                );
+                
+                result += `\n格式检测:\n`;
+                result += `优化字段: ${hasOptimization ? '✅ 存在' : '❌ 不存在'}\n`;
+                result += `分类索引: ${hasCategoryIndex ? '✅ 存在' : '❌ 不存在'}\n`;
+                result += `格式类型: ${hasOptimization && hasCategoryIndex ? '优化格式' : '传统格式'}\n`;
+                
+                if (config.optimization) {
+                    result += `\n优化信息:\n`;
+                    result += `总分类数: ${config.optimization.totalCategories || 'N/A'}\n`;
+                    result += `总网站数: ${config.optimization.totalSites || 'N/A'}\n`;
+                    result += `压缩比例: ${config.optimization.compressionRatio || 'N/A'}%\n`;
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                console.log('✅ 配置文件测试完成');
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 配置文件测试失败:\n${error.message}`;
+                console.error('❌ 配置文件测试失败:', error);
+            }
+        }
+
+        // 测试分类文件
+        async function testCategory() {
+            console.log('📁 开始分类文件测试...');
+            const resultDiv = document.getElementById('categoryResult');
+            const select = document.getElementById('categorySelect');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '🔄 正在加载分类文件...';
+                
+                const categoryId = select.value;
+                const categoryPath = `/categories/${categoryId}.json`;
+                console.log(`📂 加载分类: ${categoryPath}`);
+                
+                const response = await fetch(categoryPath);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const categoryData = await response.json();
+                
+                let result = '📁 分类文件测试成功！\n\n';
+                result += `分类文件: ${categoryPath}\n`;
+                result += `分类ID: ${categoryData.categoryId || 'N/A'}\n`;
+                result += `分类名称: ${categoryData.categoryName || '未知'}\n`;
+                result += `网站数量: ${categoryData.sites?.length || 0}\n`;
+                result += `文件大小: ${JSON.stringify(categoryData).length} 字符\n`;
+                
+                if (categoryData.sites && categoryData.sites.length > 0) {
+                    result += `\n网站示例:\n`;
+                    categoryData.sites.slice(0, 3).forEach((site, index) => {
+                        result += `${index + 1}. ${site.title || '未知'}\n`;
+                        result += `   ${site.url || '无链接'}\n`;
+                    });
+                    
+                    if (categoryData.sites.length > 3) {
+                        result += `... 还有 ${categoryData.sites.length - 3} 个网站\n`;
+                    }
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+                console.log('✅ 分类文件测试完成');
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 分类文件测试失败:\n${error.message}`;
+                console.error('❌ 分类文件测试失败:', error);
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 简化测试页面已加载');
+            console.log('💡 提示: 打开浏览器控制台查看详细日志');
+        });
+    </script>
+</body>
+</html>
