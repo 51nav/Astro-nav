@@ -17,6 +17,7 @@ cascade:
 
 ### 📄 项目规范
 - [📚 documentation-standards.md](documentation-standards.md) - 文档规范标准
+- [📋 front-matter-standards.md](front-matter-standards.md) - Front Matter 规范标准
 - [🏗️ directory-structure.md](directory-structure.md) - 目录结构设计
 
 ### 📄 指南文档

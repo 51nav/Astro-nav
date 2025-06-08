@@ -1,4 +1,34 @@
-# 📚 Astro-nav 文档规范标准
+---
+title: "文档规范标准"
+description: "项目文档编写、组织和维护的标准规范"
+type: "docs"
+category: "09-references"
+doc_type: "standard"
+order: 1
+version: "2.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "intermediate"
+
+# 规范特有字段
+standard_type: "documentation"
+enforcement_level: "mandatory"
+compliance_tools: ["markdown-lint", "link-checker"]
+review_frequency: "quarterly"
+related_standards: ["coding-standards.md"]
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
+# 📚 文档规范标准
 
 ## 🎯 规范目的
 

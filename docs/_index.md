@@ -1,8 +1,19 @@
 ---
-title: "项目名称"
+title: "Augment Template Starter"
 linkTitle: "文档首页"
 type: "docs"
-description: "项目文档中心"
+description: "AI-Human 协作开发模板文档中心"
+
+# 时间信息
+created: "2025-06-08"
+lastModified: "2025-06-08"
+
+# 作者信息
+author: "项目团队"
+maintainer: "维护者名称"
+
+# 版本信息
+version: "1.0"
 ---
 
 # 📚 文档目录索引

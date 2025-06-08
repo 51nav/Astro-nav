@@ -1,35 +1,28 @@
 {
-  "name": "nav-002",
+  "name": "augment-template-starter",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "description": "AI-Human 协作开发项目模板",
+  "keywords": ["template", "ai-collaboration", "documentation", "workflow"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/51nav/Astro-nav.git"
+  },
   "scripts": {
-    "dev": "npm run build-config && astro dev",
-    "dev:watch": "npm run copy-config:watch & astro dev",
-    "start": "npm run build-config && astro dev",
-    "build": "npm run build-config && astro build",
-    "preview": "astro preview",
-    "astro": "astro",
-    "build-config": "node scripts/build-config.js",
-    "prepare-config": "node scripts/prepare-config.js",
-    "copy-config": "node scripts/copy-config.js",
-    "copy-config:watch": "node scripts/copy-config.js --watch"
+    "install-hooks": "node scripts/install-git-hooks.js",
+    "update-timestamps": "node scripts/git-hooks/pre-commit-timestamp.js",
+    "dev": "echo 'Template ready! Customize scripts as needed.'",
+    "build": "echo 'Template ready! Customize scripts as needed.'",
+    "test": "echo 'Add your test scripts here'"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/sitemap": "^3.2.1",
-    "@types/busboy": "^1.5.4",
-    "astro": "^4.16.15",
-    "busboy": "^1.6.0",
-    "jszip": "^3.10.1",
-    "papaparse": "^5.5.3",
-    "qrcode": "^1.5.4",
-    "typescript": "^5.7.2",
-    "xlsx": "^0.18.5"
+    "typescript": "^5.7.2"
   },
   "devDependencies": {
-    "@astrojs/ts-plugin": "^1.10.4",
-    "@types/jszip": "^3.4.0",
-    "@types/papaparse": "^5.3.16",
-    "@types/qrcode": "^1.5.5"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "author": "Augment Agent & Development Team"
 }

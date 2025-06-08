@@ -1,3 +1,33 @@
+---
+title: "编码规范"
+description: "项目编码规范和质量标准"
+type: "docs"
+category: "03-development"
+doc_type: "standard"
+order: 2
+version: "1.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "intermediate"
+
+# 规范特有字段
+standard_type: "coding"
+enforcement_level: "mandatory"
+compliance_tools: ["eslint", "prettier", "typescript"]
+review_frequency: "quarterly"
+related_standards: ["documentation-standards.md"]
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
 # 📝 编码规范
 
 ## 🎯 概述
