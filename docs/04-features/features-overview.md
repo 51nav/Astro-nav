@@ -1,3 +1,26 @@
+---
+title: "Features Overview"
+description: "Features Overview相关文档"
+type: "docs"
+category: "04-features"
+doc_type: "overview"
+order: 1
+version: "1.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "beginner"
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
 # ✨ 功能概览
 
 ## 🎯 概述

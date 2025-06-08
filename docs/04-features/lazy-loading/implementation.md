@@ -1,3 +1,32 @@
+---
+title: "Implementation"
+description: "Implementation相关文档"
+type: "docs"
+category: "04-features"
+doc_type: "guide"
+order: 1
+version: "1.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "beginner"
+
+# 指南特有字段
+target_audience: ["developers"]
+prerequisites: []
+step_by_step: true
+practical_examples: true
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
 # Week 2: 前端懒加载机制实现
 
 ## 📋 项目概述

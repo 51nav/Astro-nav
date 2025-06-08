@@ -1,4 +1,34 @@
-# 📖 Astro-Nav 用户使用指南
+---
+title: "用户使用指南"
+description: "项目使用指南和操作说明"
+type: "docs"
+category: "02-user-guides"
+doc_type: "guide"
+order: 1
+version: "1.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "beginner"
+
+# 指南特有字段
+target_audience: ["end-users", "beginners"]
+prerequisites: []
+step_by_step: true
+practical_examples: true
+related_guides: ["configuration-guide.md"]
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
+# 📖 用户使用指南
 
 ## 🎯 快速开始
 

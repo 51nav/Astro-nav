@@ -29,6 +29,10 @@ cascade:
 
 ## 📂 目录内容
 
+### 📄 文档文件
+- [🚀 template-usage-guide.md](template-usage-guide.md) - 模板使用指南
+
+### 📋 计划文档
 > ⚠️ **注意**: 以下文档计划中，尚未创建
 
 - [📖 project-overview.md](project-overview.md) - 项目概览

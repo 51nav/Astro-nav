@@ -1,3 +1,26 @@
+---
+title: "Site Design"
+description: "Site Design相关文档"
+type: "docs"
+category: "04-features"
+doc_type: "design"
+order: 1
+version: "1.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "advanced"
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
 # 🌐 右侧网站数据设计
 
 ## 🎯 网站数据结构

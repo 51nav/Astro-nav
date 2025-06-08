@@ -1,3 +1,32 @@
+---
+title: "Github Actions"
+description: "Github Actions相关文档"
+type: "docs"
+category: "06-deployment"
+doc_type: "guide"
+order: 1
+version: "1.0"
+created: "2025-06-08"
+lastModified: "2025-06-08"
+author: "项目团队"
+maintainer: "维护者名称"
+status: "active"
+difficulty: "beginner"
+
+# 指南特有字段
+target_audience: ["developers"]
+prerequisites: []
+step_by_step: true
+practical_examples: true
+
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: true
+  - show_edit_link: true
+  - show_last_modified: true
+---
+
 # GitHub Actions 部署指南
 
 ## 🎯 部署架构设计

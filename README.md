@@ -109,6 +109,7 @@ augment-template-starter/
 |------|------|
 | `npm run install-hooks` | 安装 Git Hooks (自动时间戳更新) |
 | `npm run update-timestamps` | 手动更新文档时间戳 |
+| `npm run generate-front-matter` | 批量生成文档 Front Matter |
 | `npm run dev` | 启动开发服务器 (如适用) |
 | `npm run build` | 构建项目 (如适用) |
 

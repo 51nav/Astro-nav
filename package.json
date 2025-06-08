@@ -11,6 +11,7 @@
   "scripts": {
     "install-hooks": "node scripts/install-git-hooks.js",
     "update-timestamps": "node scripts/git-hooks/pre-commit-timestamp.js",
+    "generate-front-matter": "node scripts/front-matter-generator.js",
     "dev": "echo 'Template ready! Customize scripts as needed.'",
     "build": "echo 'Template ready! Customize scripts as needed.'",
     "test": "echo 'Add your test scripts here'"
