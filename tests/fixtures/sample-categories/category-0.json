@@ -1,0 +1,100 @@
+{
+  "categoryIndex": 0,
+  "categoryName": "开发工具",
+  "sites": [
+    {
+      "title": "GitHub",
+      "description": "全球最大的代码托管平台，支持Git版本控制，提供协作开发环境",
+      "url": "https://github.com",
+      "advantages": ["免费私有仓库", "强大的协作功能", "丰富的开源项目"],
+      "details": {
+        "pricing": "免费/付费",
+        "pros": ["界面友好", "功能强大", "社区活跃"],
+        "cons": ["国内访问较慢"]
+      }
+    },
+    {
+      "title": "VS Code",
+      "description": "微软开发的免费代码编辑器，支持多种编程语言和丰富的插件生态",
+      "url": "https://code.visualstudio.com",
+      "advantages": ["免费开源", "插件丰富", "性能优秀"],
+      "details": {
+        "pricing": "免费",
+        "pros": ["启动快速", "智能提示", "调试功能强大"],
+        "cons": ["内存占用较高"]
+      }
+    },
+    {
+      "title": "Stack Overflow",
+      "description": "程序员问答社区，解决编程问题的首选平台",
+      "url": "https://stackoverflow.com",
+      "advantages": ["问题质量高", "回答专业", "搜索功能强大"],
+      "details": {
+        "pricing": "免费",
+        "pros": ["内容丰富", "更新及时", "权威性高"],
+        "cons": ["英文为主"]
+      }
+    },
+    {
+      "title": "GitLab",
+      "description": "完整的DevOps平台，提供代码托管、CI/CD等功能",
+      "url": "https://gitlab.com",
+      "advantages": ["CI/CD集成", "私有部署", "功能全面"],
+      "details": {
+        "pricing": "免费/付费",
+        "pros": ["功能完整", "安全性高", "可私有部署"],
+        "cons": ["学习成本较高"]
+      }
+    },
+    {
+      "title": "Postman",
+      "description": "API开发和测试工具，支持REST、GraphQL等多种API类型",
+      "url": "https://postman.com",
+      "advantages": ["界面友好", "功能强大", "团队协作"],
+      "details": {
+        "pricing": "免费/付费",
+        "pros": ["易于使用", "测试功能完善", "文档生成"],
+        "cons": ["高级功能需付费"]
+      }
+    },
+    {
+      "title": "Docker",
+      "description": "容器化平台，简化应用部署和环境管理",
+      "url": "https://docker.com",
+      "advantages": ["环境一致性", "部署简单", "资源利用率高"],
+      "details": {
+        "pricing": "免费/付费",
+        "pros": ["轻量级", "可移植性强", "生态丰富"],
+        "cons": ["学习曲线陡峭"]
+      }
+    },
+    {
+      "title": "npm",
+      "description": "Node.js包管理器，JavaScript生态系统的核心",
+      "url": "https://npmjs.com",
+      "advantages": ["包数量庞大", "安装简单", "版本管理"],
+      "details": {
+        "pricing": "免费",
+        "pros": ["生态丰富", "使用简单", "更新及时"],
+        "cons": ["安全风险", "依赖复杂"]
+      }
+    },
+    {
+      "title": "Webpack",
+      "description": "现代JavaScript应用程序的静态模块打包器",
+      "url": "https://webpack.js.org",
+      "advantages": ["模块化打包", "插件丰富", "优化功能强大"],
+      "details": {
+        "pricing": "免费",
+        "pros": ["功能强大", "可配置性高", "社区支持"],
+        "cons": ["配置复杂", "学习成本高"]
+      }
+    }
+  ],
+  "metadata": {
+    "siteCount": 8,
+    "fileSizeKB": 2.1,
+    "lastUpdated": "2024-12-07T12:00:00.000Z",
+    "tags": ["开发", "工具", "编程", "代码"]
+  }
+}

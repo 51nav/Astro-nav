@@ -4,16 +4,19 @@
  */
 
 import type { SiteConfig } from '../types/config';
-import type { 
-  OptimizedConfig, 
-  UnifiedConfig, 
-  ConfigLoadResult, 
+import type {
+  OptimizedConfig,
+  UnifiedConfig,
+  ConfigLoadResult,
   ConfigDetectionResult,
   UnifiedMenuItem,
   UnifiedSubMenuItem,
   ConfigFormat,
-  LoadingState
+  LoadingState,
+  CategoryData,
+  CategoryLoadResult
 } from '../types/lazyLoading';
+import { defaultErrorHandler, ErrorType } from './ErrorHandler';
 
 /**
  * 配置管理器 - 核心配置管理类
@@ -26,6 +29,13 @@ export class ConfigManager {
   private configFormat: ConfigFormat = 'unknown';
   private loadingState: LoadingState = 'idle';
   private configPath: string;
+
+  // Week 3 新增: 错误处理配置
+  private retryConfig = {
+    maxRetries: 3,
+    retryDelay: 1000,
+    timeout: 10000
+  };
   
   // 性能监控
   private loadStartTime: number = 0;
@@ -51,6 +61,44 @@ export class ConfigManager {
     // 开发和生产环境都使用相同路径
     // static/ 文件夹在开发时存在，构建后会复制到 dist/
     return '/config.json';  // 对应 static/config.json
+  }
+
+  /**
+   * 带重试机制的fetch请求
+   */
+  private async fetchWithRetry(url: string, retries: number = this.retryConfig.maxRetries): Promise<Response> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.retryConfig.timeout);
+
+        const response = await fetch(url, {
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response;
+      } catch (error) {
+        const isLastAttempt = attempt === retries;
+
+        if (isLastAttempt) {
+          throw error;
+        }
+
+        console.warn(`🔄 ConfigManager: 请求失败，重试 ${attempt + 1}/${retries}`, error);
+
+        // 指数退避延迟
+        const delay = this.retryConfig.retryDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    throw new Error('重试次数已达上限');
   }
 
   /**
@@ -165,16 +213,13 @@ export class ConfigManager {
   async loadConfig(): Promise<ConfigLoadResult> {
     this.loadStartTime = performance.now();
     this.loadingState = 'loading';
-    
+
     try {
       console.log('🔄 ConfigManager: 开始加载配置文件...');
-      
-      // 1. 加载主配置文件
-      const response = await fetch(this.configPath);
-      if (!response.ok) {
-        throw new Error(`配置文件加载失败: ${response.status} ${response.statusText}`);
-      }
-      
+
+      // 1. 加载主配置文件 (带错误处理)
+      const response = await this.fetchWithRetry(this.configPath);
+
       const rawConfig = await response.json();
       this.loadMetrics.configLoadTime = performance.now() - this.loadStartTime;
       
@@ -213,13 +258,22 @@ export class ConfigManager {
     } catch (error) {
       this.loadingState = 'error';
       const totalLoadTime = performance.now() - this.loadStartTime;
-      const errorMessage = error instanceof Error ? error.message : '未知错误';
-      
+
+      // 使用错误处理器处理错误
+      const errorResult = await defaultErrorHandler.handleError(error, {
+        type: 'config',
+        operation: 'loadConfig',
+        path: this.configPath
+      });
+
+      const errorMessage = errorResult.error?.userMessage || '配置加载失败';
+
       console.error('❌ ConfigManager: 配置加载失败', {
         error: errorMessage,
-        loadTime: `${totalLoadTime.toFixed(2)}ms`
+        loadTime: `${totalLoadTime.toFixed(2)}ms`,
+        errorType: errorResult.error?.type
       });
-      
+
       return {
         success: false,
         error: errorMessage,
@@ -411,6 +465,226 @@ export class ConfigManager {
       totalLoadTime: this.loadMetrics.configLoadTime + this.loadMetrics.detectionTime + this.loadMetrics.conversionTime
     };
   }
+
+  // ============ Week 3 新增方法 ============
+
+  /**
+   * 加载优化配置 (Week 3 新增)
+   * 专门用于处理优化格式的配置文件
+   */
+  async loadOptimizedConfig(): Promise<ConfigLoadResult> {
+    console.log('🚀 ConfigManager: 开始加载优化配置...');
+
+    // 首先尝试正常加载配置
+    const result = await this.loadConfig();
+
+    if (!result.success) {
+      return result;
+    }
+
+    // 验证是否为优化配置
+    if (!result.isOptimized) {
+      console.warn('⚠️ ConfigManager: 当前配置不是优化格式');
+      return {
+        ...result,
+        error: '当前配置不是优化格式，请使用 loadConfig() 方法'
+      };
+    }
+
+    console.log('✅ ConfigManager: 优化配置加载成功', {
+      totalCategories: this.currentConfig?.optimization?.totalCategories,
+      totalSites: this.currentConfig?.optimization?.totalSites,
+      compressionRatio: this.currentConfig?.optimization?.compressionRatio
+    });
+
+    return result;
+  }
+
+  /**
+   * 加载分类数据 (Week 3 新增)
+   * 按需加载指定分类的完整网站数据
+   */
+  async loadCategoryData(categoryIndex: number): Promise<CategoryLoadResult> {
+    const startTime = performance.now();
+
+    try {
+      console.log(`🔄 ConfigManager: 开始加载分类 ${categoryIndex} 数据...`);
+
+      // 验证配置是否已加载且为优化模式
+      if (!this.isConfigLoaded()) {
+        throw new Error('配置尚未加载，请先调用 loadConfig()');
+      }
+
+      if (!this.isOptimizedMode()) {
+        throw new Error('当前配置不是优化模式，无需懒加载');
+      }
+
+      // 验证分类索引有效性
+      if (categoryIndex < 0) {
+        throw new Error(`无效的分类索引: ${categoryIndex}`);
+      }
+
+      // 构建分类数据文件路径
+      const categoryPath = `/categories/category-${categoryIndex}.json`;
+
+      // 发起带重试机制的网络请求
+      const response = await this.fetchWithRetry(categoryPath);
+
+      const categoryData: CategoryData = await response.json();
+      const loadTime = performance.now() - startTime;
+
+      // 验证数据完整性
+      if (!categoryData.sites || !Array.isArray(categoryData.sites)) {
+        throw new Error('分类数据格式错误: 缺少 sites 字段');
+      }
+
+      if (categoryData.categoryIndex !== categoryIndex) {
+        console.warn(`⚠️ 分类索引不匹配: 期望 ${categoryIndex}, 实际 ${categoryData.categoryIndex}`);
+      }
+
+      console.log(`✅ ConfigManager: 分类 ${categoryIndex} 数据加载成功`, {
+        categoryName: categoryData.categoryName,
+        siteCount: categoryData.sites.length,
+        loadTime: `${loadTime.toFixed(2)}ms`,
+        fileSizeKB: categoryData.metadata?.fileSizeKB
+      });
+
+      return {
+        success: true,
+        data: categoryData,
+        fromCache: false,
+        loadTime
+      };
+
+    } catch (error) {
+      const loadTime = performance.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+
+      console.error(`❌ ConfigManager: 分类 ${categoryIndex} 数据加载失败`, {
+        error: errorMessage,
+        loadTime: `${loadTime.toFixed(2)}ms`
+      });
+
+      return {
+        success: false,
+        error: errorMessage,
+        fromCache: false,
+        loadTime
+      };
+    }
+  }
+
+  /**
+   * 批量加载多个分类数据 (Week 3 新增)
+   */
+  async loadMultipleCategoryData(categoryIndexes: number[]): Promise<Map<number, CategoryLoadResult>> {
+    console.log(`🔄 ConfigManager: 开始批量加载 ${categoryIndexes.length} 个分类数据...`);
+
+    const results = new Map<number, CategoryLoadResult>();
+    const promises = categoryIndexes.map(async (index) => {
+      const result = await this.loadCategoryData(index);
+      results.set(index, result);
+      return { index, result };
+    });
+
+    await Promise.all(promises);
+
+    const successCount = Array.from(results.values()).filter(r => r.success).length;
+    console.log(`✅ ConfigManager: 批量加载完成`, {
+      total: categoryIndexes.length,
+      success: successCount,
+      failed: categoryIndexes.length - successCount
+    });
+
+    return results;
+  }
+
+  /**
+   * 获取分类信息 (Week 3 新增)
+   * 从主配置中获取指定分类的基本信息
+   */
+  getCategoryInfo(categoryIndex: number): { name: string; siteCount: number; previewSites: any[] } | null {
+    if (!this.currentConfig || !this.isOptimizedMode()) {
+      return null;
+    }
+
+    // 在主菜单中查找
+    for (const item of this.currentConfig.menuItems) {
+      if (item.categoryIndex === categoryIndex) {
+        return {
+          name: item.name,
+          siteCount: item.siteCount || 0,
+          previewSites: item.previewSites || []
+        };
+      }
+
+      // 在子菜单中查找
+      if (item.submenu) {
+        for (const subItem of item.submenu) {
+          if (subItem.categoryIndex === categoryIndex) {
+            return {
+              name: subItem.name,
+              siteCount: subItem.siteCount || 0,
+              previewSites: subItem.previewSites || []
+            };
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 获取所有分类索引 (Week 3 新增)
+   */
+  getAllCategoryIndexes(): number[] {
+    if (!this.currentConfig || !this.isOptimizedMode()) {
+      return [];
+    }
+
+    const indexes: number[] = [];
+
+    this.currentConfig.menuItems.forEach(item => {
+      if (typeof item.categoryIndex === 'number' && item.categoryIndex >= 0) {
+        indexes.push(item.categoryIndex);
+      }
+
+      if (item.submenu) {
+        item.submenu.forEach(subItem => {
+          if (typeof subItem.categoryIndex === 'number' && subItem.categoryIndex >= 0) {
+            indexes.push(subItem.categoryIndex);
+          }
+        });
+      }
+    });
+
+    return [...new Set(indexes)].sort((a, b) => a - b);
+  }
+
+
+
+  /**
+   * 睡眠函数
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * 更新重试配置 (Week 3 新增)
+   */
+  updateRetryConfig(config: Partial<typeof this.retryConfig>): void {
+    this.retryConfig = { ...this.retryConfig, ...config };
+    console.log('🔧 ConfigManager: 重试配置已更新', this.retryConfig);
+  }
+
+  /**
+   * 获取重试配置 (Week 3 新增)
+   */
+  getRetryConfig() {
+    return { ...this.retryConfig };
+  }
 }
 
 /**
@@ -438,4 +712,32 @@ export function getCurrentConfig(): UnifiedConfig | null {
  */
 export function isOptimizedMode(): boolean {
   return defaultConfigManager.isOptimizedMode();
+}
+
+/**
+ * 便捷函数：加载优化配置 (Week 3 新增)
+ */
+export async function loadOptimizedConfig(): Promise<ConfigLoadResult> {
+  return defaultConfigManager.loadOptimizedConfig();
+}
+
+/**
+ * 便捷函数：加载分类数据 (Week 3 新增)
+ */
+export async function loadCategoryData(categoryIndex: number): Promise<CategoryLoadResult> {
+  return defaultConfigManager.loadCategoryData(categoryIndex);
+}
+
+/**
+ * 便捷函数：获取分类信息 (Week 3 新增)
+ */
+export function getCategoryInfo(categoryIndex: number) {
+  return defaultConfigManager.getCategoryInfo(categoryIndex);
+}
+
+/**
+ * 便捷函数：获取所有分类索引 (Week 3 新增)
+ */
+export function getAllCategoryIndexes(): number[] {
+  return defaultConfigManager.getAllCategoryIndexes();
 }

@@ -1,0 +1,525 @@
+---
+/**
+ * 系统压力测试页面
+ * Week 3 - 任务3.2压力测试
+ */
+
+import { ConfigManager } from '../../../utils/ConfigManager';
+import { LazyLoader } from '../../../utils/LazyLoader';
+import { PreloadStrategy } from '../../../utils/PreloadStrategy';
+import { PerformanceMonitor as PerformanceMonitorClass } from '../../../utils/PerformanceMonitor';
+import { defaultLocalStorageCache } from '../../../utils/LocalStorageCache';
+
+// 测试结果接口
+interface StressTestResult {
+  name: string;
+  success: boolean;
+  duration: number;
+  details: any;
+  error?: string;
+  metrics: {
+    throughput: number;
+    errorRate: number;
+    avgResponseTime: number;
+    maxResponseTime: number;
+    minResponseTime: number;
+  };
+}
+
+async function runStressTest(
+  name: string, 
+  testFn: () => Promise<any>,
+  iterations: number = 100
+): Promise<StressTestResult> {
+  const startTime = performance.now();
+  const results: Array<{ success: boolean; duration: number; error?: string }> = [];
+  
+  try {
+    for (let i = 0; i < iterations; i++) {
+      const iterationStart = performance.now();
+      try {
+        await testFn();
+        results.push({
+          success: true,
+          duration: performance.now() - iterationStart
+        });
+      } catch (error) {
+        results.push({
+          success: false,
+          duration: performance.now() - iterationStart,
+          error: error instanceof Error ? error.message : '未知错误'
+        });
+      }
+    }
+    
+    const totalDuration = performance.now() - startTime;
+    const successCount = results.filter(r => r.success).length;
+    const durations = results.map(r => r.duration);
+    
+    return {
+      name,
+      success: successCount > iterations * 0.95, // 95%成功率
+      duration: totalDuration,
+      details: {
+        iterations,
+        successCount,
+        failureCount: iterations - successCount,
+        results: results.slice(0, 10) // 只保留前10个结果用于展示
+      },
+      metrics: {
+        throughput: iterations / (totalDuration / 1000), // 每秒操作数
+        errorRate: ((iterations - successCount) / iterations) * 100,
+        avgResponseTime: durations.reduce((sum, d) => sum + d, 0) / durations.length,
+        maxResponseTime: Math.max(...durations),
+        minResponseTime: Math.min(...durations)
+      }
+    };
+  } catch (error) {
+    return {
+      name,
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误',
+      metrics: {
+        throughput: 0,
+        errorRate: 100,
+        avgResponseTime: 0,
+        maxResponseTime: 0,
+        minResponseTime: 0
+      }
+    };
+  }
+}
+
+// 初始化组件
+const configManager = new ConfigManager();
+const lazyLoader = new LazyLoader(configManager);
+const preloadStrategy = new PreloadStrategy(lazyLoader, configManager);
+const performanceMonitor = new PerformanceMonitorClass();
+
+// 预加载配置
+await configManager.loadConfig();
+const categories = configManager.getAllCategoryIndexes();
+
+// 执行压力测试
+const stressTests: StressTestResult[] = [
+  // 测试1: 配置加载压力测试
+  await runStressTest('配置加载压力测试', async () => {
+    const result = await configManager.loadConfig();
+    if (!result.success) throw new Error('配置加载失败');
+  }, 50),
+
+  // 测试2: 分类加载压力测试
+  await runStressTest('分类加载压力测试', async () => {
+    if (categories.length === 0) throw new Error('没有可用分类');
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const result = await lazyLoader.loadCategory(randomCategory);
+    if (!result.success) throw new Error('分类加载失败');
+  }, 200),
+
+  // 测试3: 缓存压力测试
+  await runStressTest('缓存压力测试', async () => {
+    const key = `stress_test_${Math.random()}`;
+    const data = { test: 'data', timestamp: Date.now(), random: Math.random() };
+    
+    const setResult = await defaultLocalStorageCache.set(key, data);
+    if (!setResult) throw new Error('缓存设置失败');
+    
+    const getData = await defaultLocalStorageCache.get(key);
+    if (!getData) throw new Error('缓存获取失败');
+    
+    await defaultLocalStorageCache.delete(key);
+  }, 300),
+
+  // 测试4: 并发加载压力测试
+  await runStressTest('并发加载压力测试', async () => {
+    if (categories.length < 3) throw new Error('分类数量不足');
+    
+    const promises = [];
+    for (let i = 0; i < 3; i++) {
+      const categoryIndex = categories[i % categories.length];
+      promises.push(lazyLoader.loadCategory(categoryIndex));
+    }
+    
+    const results = await Promise.all(promises);
+    const failedCount = results.filter(r => !r.success).length;
+    if (failedCount > 0) throw new Error(`${failedCount}个并发请求失败`);
+  }, 100),
+
+  // 测试5: 性能监控压力测试
+  await runStressTest('性能监控压力测试', async () => {
+    // 记录各种性能数据
+    performanceMonitor.recordConfigLoadTime(Math.random() * 1000);
+    performanceMonitor.recordCategoryLoadTime(Math.random() * 500);
+    performanceMonitor.recordNetworkRequest(Math.random() * 800, Math.random() > 0.1);
+    performanceMonitor.recordUserInteraction(Math.random() * 100);
+    
+    const metrics = performanceMonitor.getMetrics();
+    if (!metrics) throw new Error('性能指标获取失败');
+  }, 500),
+
+  // 测试6: 内存压力测试
+  await runStressTest('内存压力测试', async () => {
+    // 创建大量数据
+    const largeData = Array.from({ length: 1000 }, (_, i) => ({
+      id: i,
+      data: 'x'.repeat(100),
+      timestamp: Date.now(),
+      random: Math.random()
+    }));
+    
+    const key = `memory_test_${Date.now()}`;
+    const setResult = await defaultLocalStorageCache.set(key, largeData);
+    if (!setResult) throw new Error('大数据缓存失败');
+    
+    const getData = await defaultLocalStorageCache.get(key);
+    if (!getData || getData.length !== largeData.length) {
+      throw new Error('大数据获取失败');
+    }
+    
+    await defaultLocalStorageCache.delete(key);
+  }, 50)
+];
+
+// 计算总体压力测试统计
+const stressStats = {
+  totalTests: stressTests.length,
+  passedTests: stressTests.filter(t => t.success).length,
+  failedTests: stressTests.filter(t => !t.success).length,
+  successRate: (stressTests.filter(t => t.success).length / stressTests.length) * 100,
+  totalDuration: stressTests.reduce((sum, t) => sum + t.duration, 0),
+  avgThroughput: stressTests.reduce((sum, t) => sum + t.metrics.throughput, 0) / stressTests.length,
+  avgErrorRate: stressTests.reduce((sum, t) => sum + t.metrics.errorRate, 0) / stressTests.length,
+  avgResponseTime: stressTests.reduce((sum, t) => sum + t.metrics.avgResponseTime, 0) / stressTests.length
+};
+
+// 系统健康检查
+const systemHealth = {
+  memoryUsage: performanceMonitor.getMetrics().memoryUsage,
+  cacheStats: lazyLoader.getCacheStats(),
+  localStorageStats: defaultLocalStorageCache.getStats(),
+  performanceScore: performanceMonitor.getPerformanceScore(),
+  systemScore: performanceMonitor.getSystemHealth().score
+};
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统压力测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .stress-dashboard {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .dashboard-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .dashboard-item.excellent {
+      background: #d1fae5;
+      border-color: #10b981;
+    }
+    
+    .dashboard-item.good {
+      background: #dbeafe;
+      border-color: #3b82f6;
+    }
+    
+    .dashboard-item.warning {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+    
+    .dashboard-item.critical {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    
+    .dashboard-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .dashboard-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .system-health {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .health-item {
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+    
+    .health-item.healthy {
+      background: #f0fdf4;
+      border-left-color: #22c55e;
+    }
+    
+    .health-item.warning {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+    }
+    
+    .health-item.critical {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+    }
+    
+    .test-results {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .test-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .test-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-header.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .test-header.failure {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .test-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .test-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    
+    .metric-item {
+      text-align: center;
+      padding: 10px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .metric-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1f2937;
+    }
+    
+    .metric-label {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    
+    .test-details {
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin: 15px;
+    }
+    
+    .test-details pre {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔥 系统压力测试</h1>
+    <div class="subtitle">Week 3 - 任务3.2压力测试 | 测试时间: {new Date().toLocaleString()}</div>
+  </div>
+
+  <!-- 压力测试仪表板 -->
+  <div class="stress-dashboard">
+    <h2>📊 压力测试总览</h2>
+    <div class="dashboard-grid">
+      <div class={`dashboard-item ${stressStats.successRate >= 95 ? 'excellent' : stressStats.successRate >= 90 ? 'good' : stressStats.successRate >= 80 ? 'warning' : 'critical'}`}>
+        <div class="dashboard-value">{stressStats.successRate.toFixed(1)}%</div>
+        <div class="dashboard-label">成功率</div>
+      </div>
+      <div class={`dashboard-item ${stressStats.avgThroughput >= 100 ? 'excellent' : stressStats.avgThroughput >= 50 ? 'good' : 'warning'}`}>
+        <div class="dashboard-value">{stressStats.avgThroughput.toFixed(1)}</div>
+        <div class="dashboard-label">平均吞吐量 (ops/s)</div>
+      </div>
+      <div class={`dashboard-item ${stressStats.avgErrorRate <= 5 ? 'excellent' : stressStats.avgErrorRate <= 10 ? 'good' : 'warning'}`}>
+        <div class="dashboard-value">{stressStats.avgErrorRate.toFixed(1)}%</div>
+        <div class="dashboard-label">平均错误率</div>
+      </div>
+      <div class={`dashboard-item ${stressStats.avgResponseTime <= 50 ? 'excellent' : stressStats.avgResponseTime <= 100 ? 'good' : 'warning'}`}>
+        <div class="dashboard-value">{stressStats.avgResponseTime.toFixed(1)}ms</div>
+        <div class="dashboard-label">平均响应时间</div>
+      </div>
+      <div class="dashboard-item good">
+        <div class="dashboard-value">{stressStats.passedTests}/{stressStats.totalTests}</div>
+        <div class="dashboard-label">通过测试</div>
+      </div>
+      <div class="dashboard-item">
+        <div class="dashboard-value">{(stressStats.totalDuration / 1000).toFixed(1)}s</div>
+        <div class="dashboard-label">总测试时间</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 系统健康状态 -->
+  <div class="system-health">
+    <h2>🏥 系统健康状态</h2>
+    <div class="health-grid">
+      <div class={`health-item ${systemHealth.memoryUsage <= 30 ? 'healthy' : systemHealth.memoryUsage <= 50 ? 'warning' : 'critical'}`}>
+        <h4>💾 内存使用</h4>
+        <div>当前使用: {systemHealth.memoryUsage.toFixed(1)}MB</div>
+        <div>状态: {systemHealth.memoryUsage <= 30 ? '健康' : systemHealth.memoryUsage <= 50 ? '警告' : '严重'}</div>
+      </div>
+      
+      <div class={`health-item ${systemHealth.cacheStats.hitRate >= 80 ? 'healthy' : systemHealth.cacheStats.hitRate >= 60 ? 'warning' : 'critical'}`}>
+        <h4>📦 缓存状态</h4>
+        <div>命中率: {systemHealth.cacheStats.hitRate.toFixed(1)}%</div>
+        <div>缓存项: {systemHealth.cacheStats.cacheSize}</div>
+      </div>
+      
+      <div class={`health-item ${systemHealth.localStorageStats.hitRate >= 70 ? 'healthy' : systemHealth.localStorageStats.hitRate >= 50 ? 'warning' : 'critical'}`}>
+        <h4>💿 本地存储</h4>
+        <div>命中率: {systemHealth.localStorageStats.hitRate.toFixed(1)}%</div>
+        <div>存储项: {systemHealth.localStorageStats.totalItems}</div>
+      </div>
+      
+      <div class={`health-item ${systemHealth.performanceScore >= 80 ? 'healthy' : systemHealth.performanceScore >= 60 ? 'warning' : 'critical'}`}>
+        <h4>⚡ 性能评分</h4>
+        <div>评分: {systemHealth.performanceScore}/100</div>
+        <div>系统评分: {systemHealth.systemScore}/100</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 压力测试结果 -->
+  <div class="test-results">
+    {stressTests.map((test, index) => (
+      <div class="test-card">
+        <div class={`test-header ${test.success ? 'success' : 'failure'}`}>
+          <div class="test-name">
+            <span>{test.success ? '✅' : '❌'}</span>
+            {test.name}
+          </div>
+          <div class="test-duration">{test.duration.toFixed(0)}ms</div>
+        </div>
+        
+        <div class="test-metrics">
+          <div class="metric-item">
+            <div class="metric-value">{test.metrics.throughput.toFixed(1)}</div>
+            <div class="metric-label">吞吐量 (ops/s)</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">{test.metrics.errorRate.toFixed(1)}%</div>
+            <div class="metric-label">错误率</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">{test.metrics.avgResponseTime.toFixed(1)}ms</div>
+            <div class="metric-label">平均响应</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">{test.metrics.maxResponseTime.toFixed(1)}ms</div>
+            <div class="metric-label">最大响应</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">{test.metrics.minResponseTime.toFixed(1)}ms</div>
+            <div class="metric-label">最小响应</div>
+          </div>
+        </div>
+        
+        <div class="test-details">
+          <strong>测试详情:</strong>
+          <pre>{JSON.stringify(test.details, null, 2)}</pre>
+        </div>
+        
+        {test.error && (
+          <div class="error-message">
+            <strong>错误信息:</strong> {test.error}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  <script define:vars={{ stressTests, stressStats, systemHealth }} is:inline>
+    console.log('🔥 系统压力测试页面已加载');
+    console.log('📊 压力测试结果:', JSON.stringify(stressTests, null, 2));
+    console.log('📊 压力测试统计:', JSON.stringify(stressStats, null, 2));
+    console.log('🏥 系统健康状态:', JSON.stringify(systemHealth, null, 2));
+  </script>
+</body>
+</html>

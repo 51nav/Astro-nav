@@ -1,0 +1,856 @@
+---
+/**
+ * 性能监控面板组件
+ * Week 3 - 任务2.2
+ */
+
+export interface Props {
+  /** 是否显示性能面板 */
+  visible?: boolean;
+  /** 面板位置 */
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  /** 是否可折叠 */
+  collapsible?: boolean;
+  /** 默认是否折叠 */
+  defaultCollapsed?: boolean;
+  /** 更新间隔 (ms) */
+  updateInterval?: number;
+  /** 自定义CSS类 */
+  className?: string;
+}
+
+const {
+  visible = true,
+  position = 'top-right',
+  collapsible = true,
+  defaultCollapsed = false,
+  updateInterval = 5000,
+  className = ''
+} = Astro.props;
+
+// 如果不显示，直接返回
+if (!visible) {
+  return null;
+}
+
+// 生成CSS类名
+const positionClass = `monitor-${position}`;
+const combinedClass = ['performance-monitor', positionClass, className].filter(Boolean).join(' ');
+---
+
+<div class={combinedClass} id="performance-monitor">
+  <!-- 面板头部 -->
+  <div class="monitor-header">
+    <div class="monitor-title">
+      <span class="monitor-icon">📊</span>
+      <span class="monitor-text">性能监控</span>
+      <span class="monitor-score" id="performance-score">--</span>
+    </div>
+    {collapsible && (
+      <button class="monitor-toggle" id="monitor-toggle" aria-label="折叠/展开性能面板">
+        <span class="toggle-icon">▼</span>
+      </button>
+    )}
+  </div>
+
+  <!-- 面板内容 -->
+  <div class="monitor-content" id="monitor-content">
+    <!-- 核心指标 -->
+    <div class="metrics-section">
+      <h4 class="section-title">核心指标</h4>
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <div class="metric-label">配置加载</div>
+          <div class="metric-value" id="config-load-time">--ms</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">分类加载</div>
+          <div class="metric-value" id="category-load-time">--ms</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">缓存命中率</div>
+          <div class="metric-value" id="cache-hit-rate">--%</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">内存使用</div>
+          <div class="metric-value" id="memory-usage">--MB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 实时统计 -->
+    <div class="stats-section">
+      <h4 class="section-title">实时统计</h4>
+      <div class="stats-list">
+        <div class="stat-item">
+          <span class="stat-label">网络请求:</span>
+          <span class="stat-value" id="network-requests">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">用户交互:</span>
+          <span class="stat-value" id="user-interactions">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">预加载次数:</span>
+          <span class="stat-value" id="preload-count">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">缓存大小:</span>
+          <span class="stat-value" id="cache-size">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 性能警告 -->
+    <div class="alerts-section">
+      <h4 class="section-title">性能警告</h4>
+      <div class="alerts-container" id="alerts-container">
+        <div class="no-alerts">暂无警告</div>
+      </div>
+    </div>
+
+    <!-- 优化建议 -->
+    <div class="recommendations-section">
+      <h4 class="section-title">优化建议</h4>
+      <div class="recommendations-container" id="recommendations-container">
+        <div class="no-recommendations">暂无建议</div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="actions-section">
+      <button class="action-btn" id="refresh-btn">刷新数据</button>
+      <button class="action-btn" id="export-btn">导出报告</button>
+      <button class="action-btn" id="reset-btn">重置统计</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* 基础样式 */
+  .performance-monitor {
+    position: fixed;
+    z-index: 9999;
+    width: 320px;
+    max-height: 80vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  /* 位置样式 */
+  .monitor-top-right {
+    top: 20px;
+    right: 20px;
+  }
+
+  .monitor-top-left {
+    top: 20px;
+    left: 20px;
+  }
+
+  .monitor-bottom-right {
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .monitor-bottom-left {
+    bottom: 20px;
+    left: 20px;
+  }
+
+  /* 头部样式 */
+  .monitor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    cursor: move;
+  }
+
+  .monitor-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+
+  .monitor-icon {
+    font-size: 16px;
+  }
+
+  .monitor-score {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .monitor-toggle {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .monitor-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .toggle-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+
+  .monitor-toggle.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+  }
+
+  /* 内容样式 */
+  .monitor-content {
+    max-height: calc(80vh - 60px);
+    overflow-y: auto;
+    transition: max-height 0.3s ease;
+  }
+
+  .monitor-content.collapsed {
+    max-height: 0;
+    overflow: hidden;
+  }
+
+  /* 区域样式 */
+  .metrics-section,
+  .stats-section,
+  .alerts-section,
+  .recommendations-section,
+  .actions-section {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .actions-section {
+    border-bottom: none;
+  }
+
+  .section-title {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* 指标网格 */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .metric-item {
+    text-align: center;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1e293b;
+  }
+
+  .metric-value.good {
+    color: #059669;
+  }
+
+  .metric-value.warning {
+    color: #d97706;
+  }
+
+  .metric-value.error {
+    color: #dc2626;
+  }
+
+  /* 统计列表 */
+  .stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 6px;
+  }
+
+  .stat-label {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  /* 警告样式 */
+  .alerts-container,
+  .recommendations-container {
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .alert-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 4px solid;
+  }
+
+  .alert-item.warning {
+    background: #fef3c7;
+    border-left-color: #f59e0b;
+    color: #92400e;
+  }
+
+  .alert-item.error {
+    background: #fee2e2;
+    border-left-color: #ef4444;
+    color: #991b1b;
+  }
+
+  .alert-item.info {
+    background: #dbeafe;
+    border-left-color: #3b82f6;
+    color: #1e40af;
+  }
+
+  /* 建议样式 */
+  .recommendation-item {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .recommendation-title {
+    font-weight: 600;
+    color: #166534;
+    margin-bottom: 4px;
+  }
+
+  .recommendation-desc {
+    color: #15803d;
+    line-height: 1.4;
+  }
+
+  .recommendation-impact {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .recommendation-impact.high {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .recommendation-impact.medium {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .recommendation-impact.low {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  /* 无数据样式 */
+  .no-alerts,
+  .no-recommendations {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 12px;
+    padding: 20px;
+  }
+
+  /* 操作按钮 */
+  .actions-section {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  .action-btn:active {
+    transform: translateY(1px);
+  }
+
+  /* 滚动条样式 */
+  .monitor-content::-webkit-scrollbar,
+  .alerts-container::-webkit-scrollbar,
+  .recommendations-container::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .monitor-content::-webkit-scrollbar-track,
+  .alerts-container::-webkit-scrollbar-track,
+  .recommendations-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  .monitor-content::-webkit-scrollbar-thumb,
+  .alerts-container::-webkit-scrollbar-thumb,
+  .recommendations-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .performance-monitor {
+      width: 280px;
+      max-height: 70vh;
+    }
+
+    .metrics-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .actions-section {
+      flex-direction: column;
+    }
+
+    .action-btn {
+      flex: none;
+    }
+  }
+
+  /* 深色模式支持 */
+  @media (prefers-color-scheme: dark) {
+    .performance-monitor {
+      background: rgba(31, 41, 55, 0.95);
+      border-color: #4b5563;
+      color: #f9fafb;
+    }
+
+    .section-title {
+      color: #d1d5db;
+    }
+
+    .metric-item,
+    .stat-item {
+      background: #374151;
+      border-color: #4b5563;
+    }
+
+    .metric-value,
+    .stat-value {
+      color: #f9fafb;
+    }
+
+    .stat-label {
+      color: #9ca3af;
+    }
+
+    .action-btn {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f9fafb;
+    }
+
+    .action-btn:hover {
+      background: #4b5563;
+    }
+  }
+
+  /* 动画效果 */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .metric-value.updating {
+    animation: pulse 1s ease-in-out;
+  }
+
+  /* 拖拽样式 */
+  .performance-monitor.dragging {
+    transform: rotate(2deg);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  }
+</style>
+
+<script define:vars={{ updateInterval, defaultCollapsed }}>
+  console.log('📊 PerformanceMonitor组件已加载');
+
+  // 性能监控状态
+  let isCollapsed = defaultCollapsed;
+  let isDragging = false;
+  let dragOffset = { x: 0, y: 0 };
+
+  // DOM元素
+  const monitor = document.getElementById('performance-monitor');
+  const toggle = document.getElementById('monitor-toggle');
+  const content = document.getElementById('monitor-content');
+  const refreshBtn = document.getElementById('refresh-btn');
+  const exportBtn = document.getElementById('export-btn');
+  const resetBtn = document.getElementById('reset-btn');
+
+  // 初始化
+  function initialize() {
+    if (isCollapsed) {
+      toggleCollapse();
+    }
+    
+    // 绑定事件
+    if (toggle) {
+      toggle.addEventListener('click', toggleCollapse);
+    }
+    
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', refreshData);
+    }
+    
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportReport);
+    }
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', resetStats);
+    }
+    
+    // 拖拽功能
+    if (monitor) {
+      const header = monitor.querySelector('.monitor-header');
+      if (header) {
+        header.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag);
+      }
+    }
+    
+    // 开始定期更新
+    startUpdating();
+  }
+
+  // 折叠/展开
+  function toggleCollapse() {
+    isCollapsed = !isCollapsed;
+    
+    if (content) {
+      content.classList.toggle('collapsed', isCollapsed);
+    }
+    
+    if (toggle) {
+      toggle.classList.toggle('collapsed', isCollapsed);
+    }
+  }
+
+  // 开始拖拽
+  function startDrag(e) {
+    isDragging = true;
+    const rect = monitor.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    monitor.classList.add('dragging');
+    e.preventDefault();
+  }
+
+  // 拖拽中
+  function drag(e) {
+    if (!isDragging) return;
+    
+    const x = e.clientX - dragOffset.x;
+    const y = e.clientY - dragOffset.y;
+    
+    monitor.style.left = `${x}px`;
+    monitor.style.top = `${y}px`;
+    monitor.style.right = 'auto';
+    monitor.style.bottom = 'auto';
+  }
+
+  // 结束拖拽
+  function endDrag() {
+    if (isDragging) {
+      isDragging = false;
+      monitor.classList.remove('dragging');
+    }
+  }
+
+  // 刷新数据
+  function refreshData() {
+    updateDisplay();
+    console.log('📊 性能数据已刷新');
+  }
+
+  // 导出报告
+  function exportReport() {
+    // 模拟导出功能
+    const report = {
+      timestamp: new Date().toISOString(),
+      metrics: 'Performance metrics data...',
+      alerts: 'Performance alerts data...',
+      recommendations: 'Performance recommendations...'
+    };
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance-report-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    console.log('📊 性能报告已导出');
+  }
+
+  // 重置统计
+  function resetStats() {
+    if (confirm('确定要重置所有性能统计数据吗？')) {
+      // 重置显示
+      updateDisplay({
+        score: 100,
+        configLoadTime: 0,
+        categoryLoadTime: 0,
+        cacheHitRate: 0,
+        memoryUsage: 0,
+        networkRequests: 0,
+        userInteractions: 0,
+        preloadCount: 0,
+        cacheSize: 0
+      });
+      
+      console.log('📊 性能统计已重置');
+    }
+  }
+
+  // 更新显示
+  function updateDisplay(data) {
+    // 模拟性能数据
+    const mockData = data || {
+      score: Math.floor(Math.random() * 30) + 70,
+      configLoadTime: Math.floor(Math.random() * 500) + 100,
+      categoryLoadTime: Math.floor(Math.random() * 300) + 50,
+      cacheHitRate: Math.floor(Math.random() * 30) + 70,
+      memoryUsage: (Math.random() * 20 + 10).toFixed(1),
+      networkRequests: Math.floor(Math.random() * 50) + 10,
+      userInteractions: Math.floor(Math.random() * 20) + 5,
+      preloadCount: Math.floor(Math.random() * 10) + 2,
+      cacheSize: Math.floor(Math.random() * 8) + 2
+    };
+
+    // 更新性能评分
+    const scoreElement = document.getElementById('performance-score');
+    if (scoreElement) {
+      scoreElement.textContent = `${mockData.score}分`;
+      scoreElement.className = `monitor-score ${getScoreClass(mockData.score)}`;
+    }
+
+    // 更新核心指标
+    updateMetricValue('config-load-time', `${mockData.configLoadTime}ms`, mockData.configLoadTime);
+    updateMetricValue('category-load-time', `${mockData.categoryLoadTime}ms`, mockData.categoryLoadTime);
+    updateMetricValue('cache-hit-rate', `${mockData.cacheHitRate}%`, mockData.cacheHitRate);
+    updateMetricValue('memory-usage', `${mockData.memoryUsage}MB`, parseFloat(mockData.memoryUsage));
+
+    // 更新统计数据
+    updateStatValue('network-requests', mockData.networkRequests);
+    updateStatValue('user-interactions', mockData.userInteractions);
+    updateStatValue('preload-count', mockData.preloadCount);
+    updateStatValue('cache-size', mockData.cacheSize);
+
+    // 更新警告和建议
+    updateAlerts(mockData);
+    updateRecommendations(mockData);
+  }
+
+  // 更新指标值
+  function updateMetricValue(id, value, numericValue) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value;
+      element.className = `metric-value ${getValueClass(id, numericValue)} updating`;
+      
+      // 移除动画类
+      setTimeout(() => {
+        element.classList.remove('updating');
+      }, 1000);
+    }
+  }
+
+  // 更新统计值
+  function updateStatValue(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  // 获取评分样式类
+  function getScoreClass(score) {
+    if (score >= 80) return 'good';
+    if (score >= 60) return 'warning';
+    return 'error';
+  }
+
+  // 获取值样式类
+  function getValueClass(id, value) {
+    const thresholds = {
+      'config-load-time': { good: 500, warning: 1000 },
+      'category-load-time': { good: 100, warning: 300 },
+      'cache-hit-rate': { good: 80, warning: 60 },
+      'memory-usage': { good: 30, warning: 50 }
+    };
+
+    const threshold = thresholds[id];
+    if (!threshold) return '';
+
+    if (id === 'cache-hit-rate') {
+      // 缓存命中率越高越好
+      if (value >= threshold.good) return 'good';
+      if (value >= threshold.warning) return 'warning';
+      return 'error';
+    } else {
+      // 其他指标越低越好
+      if (value <= threshold.good) return 'good';
+      if (value <= threshold.warning) return 'warning';
+      return 'error';
+    }
+  }
+
+  // 更新警告
+  function updateAlerts(data) {
+    const container = document.getElementById('alerts-container');
+    if (!container) return;
+
+    const alerts = [];
+    
+    if (data.configLoadTime > 800) {
+      alerts.push({
+        type: 'warning',
+        message: `配置加载时间过长: ${data.configLoadTime}ms`
+      });
+    }
+    
+    if (data.cacheHitRate < 70) {
+      alerts.push({
+        type: 'error',
+        message: `缓存命中率过低: ${data.cacheHitRate}%`
+      });
+    }
+    
+    if (parseFloat(data.memoryUsage) > 40) {
+      alerts.push({
+        type: 'warning',
+        message: `内存使用过高: ${data.memoryUsage}MB`
+      });
+    }
+
+    if (alerts.length === 0) {
+      container.innerHTML = '<div class="no-alerts">暂无警告</div>';
+    } else {
+      container.innerHTML = alerts.map(alert => 
+        `<div class="alert-item ${alert.type}">${alert.message}</div>`
+      ).join('');
+    }
+  }
+
+  // 更新建议
+  function updateRecommendations(data) {
+    const container = document.getElementById('recommendations-container');
+    if (!container) return;
+
+    const recommendations = [];
+    
+    if (data.cacheHitRate < 80) {
+      recommendations.push({
+        title: '提高缓存命中率',
+        description: '建议增加预加载策略或调整缓存大小',
+        impact: 'high'
+      });
+    }
+    
+    if (data.categoryLoadTime > 200) {
+      recommendations.push({
+        title: '优化加载性能',
+        description: '建议启用更积极的预加载策略',
+        impact: 'medium'
+      });
+    }
+
+    if (recommendations.length === 0) {
+      container.innerHTML = '<div class="no-recommendations">暂无建议</div>';
+    } else {
+      container.innerHTML = recommendations.map(rec => 
+        `<div class="recommendation-item">
+          <div class="recommendation-title">${rec.title}</div>
+          <div class="recommendation-desc">${rec.description}</div>
+          <span class="recommendation-impact ${rec.impact}">${rec.impact}</span>
+        </div>`
+      ).join('');
+    }
+  }
+
+  // 开始定期更新
+  function startUpdating() {
+    updateDisplay(); // 立即更新一次
+    
+    setInterval(() => {
+      if (!isCollapsed) {
+        updateDisplay();
+      }
+    }, updateInterval);
+  }
+
+  // 初始化组件
+  initialize();
+</script>

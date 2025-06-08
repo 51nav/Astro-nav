@@ -1,0 +1,54 @@
+{
+  "categoryId": 5,
+  "categoryName": "社交流量",
+  "sites": [
+    {
+      "title": "Facebook Ads",
+      "description": "最大的社交广告平台",
+      "url": "https://facebook.com/advertising",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "TikTok Ads",
+      "description": "短视频广告平台",
+      "url": "https://ads.tiktok.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Twitter Ads",
+      "description": "推特广告平台",
+      "url": "https://ads.twitter.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

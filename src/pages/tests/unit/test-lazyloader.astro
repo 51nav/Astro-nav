@@ -1,0 +1,460 @@
+---
+/**
+ * LazyLoader组件测试页面
+ * Week 3 - 任务1.2验证
+ */
+
+import { 
+  LazyLoader,
+  loadCategoryWithLazyLoader,
+  loadMultipleCategoriesWithLazyLoader,
+  getLazyLoaderStats
+} from '../../../utils/LazyLoader';
+import { ConfigManager } from '../../../utils/ConfigManager';
+
+// 测试结果接口
+interface TestResult {
+  name: string;
+  success: boolean;
+  duration: number;
+  details: any;
+  error?: string;
+}
+
+async function runTest(name: string, testFn: () => Promise<any>): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    const result = await testFn();
+    return {
+      name,
+      success: true,
+      duration: performance.now() - startTime,
+      details: result
+    };
+  } catch (error) {
+    return {
+      name,
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 初始化ConfigManager和LazyLoader
+const configManager = new ConfigManager();
+const lazyLoader = new LazyLoader(configManager);
+
+// 执行测试
+const testResults: TestResult[] = [
+  // 测试1: LazyLoader基础功能
+  await runTest('LazyLoader初始化', async () => {
+    const stats = lazyLoader.getCacheStats();
+    return {
+      cacheSize: stats.cacheSize,
+      maxCacheSize: stats.maxCacheSize,
+      options: stats.options
+    };
+  }),
+
+  // 测试2: 配置加载
+  await runTest('配置管理器加载', async () => {
+    const result = await configManager.loadOptimizedConfig();
+    return {
+      success: result.success,
+      isOptimized: result.isOptimized,
+      totalCategories: result.config?.optimization?.totalCategories
+    };
+  }),
+
+  // 测试3: 单个分类加载
+  await runTest('单个分类加载', async () => {
+    const indexes = configManager.getAllCategoryIndexes();
+    if (indexes.length === 0) {
+      throw new Error('没有可用的分类索引');
+    }
+    
+    const firstIndex = indexes[0];
+    const result = await lazyLoader.loadCategory(firstIndex);
+    
+    return {
+      categoryIndex: firstIndex,
+      success: result.success,
+      fromCache: result.fromCache,
+      loadTime: result.loadTime,
+      hasData: !!result.data,
+      siteCount: result.data?.sites?.length
+    };
+  }),
+
+  // 测试4: LRU缓存验证
+  await runTest('LRU缓存验证', async () => {
+    const indexes = configManager.getAllCategoryIndexes();
+    if (indexes.length === 0) {
+      throw new Error('没有可用的分类索引');
+    }
+    
+    const firstIndex = indexes[0];
+    
+    // 第一次加载
+    const result1 = await lazyLoader.loadCategory(firstIndex);
+    
+    // 第二次加载 (应该从缓存获取)
+    const result2 = await lazyLoader.loadCategory(firstIndex);
+    
+    const stats = lazyLoader.getCacheStats();
+    
+    return {
+      firstLoad: {
+        success: result1.success,
+        fromCache: result1.fromCache,
+        loadTime: result1.loadTime
+      },
+      secondLoad: {
+        success: result2.success,
+        fromCache: result2.fromCache,
+        loadTime: result2.loadTime
+      },
+      cacheSize: stats.cacheSize,
+      cacheWorking: !result1.fromCache && result2.fromCache
+    };
+  }),
+
+  // 测试5: 并发请求去重
+  await runTest('并发请求去重', async () => {
+    const indexes = configManager.getAllCategoryIndexes();
+    if (indexes.length < 2) {
+      throw new Error('需要至少2个分类进行测试');
+    }
+    
+    const testIndex = indexes[1];
+    
+    // 清理缓存确保测试准确性
+    lazyLoader.clearCache();
+    
+    // 同时发起3个相同的请求
+    const promises = [
+      lazyLoader.loadCategory(testIndex),
+      lazyLoader.loadCategory(testIndex),
+      lazyLoader.loadCategory(testIndex)
+    ];
+    
+    const results = await Promise.all(promises);
+    
+    return {
+      allSuccess: results.every(r => r.success),
+      loadTimes: results.map(r => r.loadTime),
+      fromCache: results.map(r => r.fromCache),
+      deduplicationWorking: results.every(r => r.success)
+    };
+  }),
+
+  // 测试6: 批量加载
+  await runTest('批量加载测试', async () => {
+    const indexes = configManager.getAllCategoryIndexes();
+    const testIndexes = indexes.slice(0, Math.min(3, indexes.length));
+    
+    if (testIndexes.length === 0) {
+      throw new Error('没有可用的分类进行批量测试');
+    }
+    
+    const results = await lazyLoader.loadMultipleCategories(testIndexes);
+    
+    const successCount = Array.from(results.values()).filter(r => r.success).length;
+    
+    return {
+      requestedCount: testIndexes.length,
+      successCount,
+      results: Array.from(results.entries()).map(([index, result]) => ({
+        categoryIndex: index,
+        success: result.success,
+        fromCache: result.fromCache,
+        loadTime: result.loadTime
+      }))
+    };
+  }),
+
+  // 测试7: 便捷函数测试
+  await runTest('便捷函数测试', async () => {
+    const indexes = configManager.getAllCategoryIndexes();
+    if (indexes.length === 0) {
+      throw new Error('没有可用的分类索引');
+    }
+    
+    const firstIndex = indexes[0];
+    
+    // 测试单个加载便捷函数
+    const singleResult = await loadCategoryWithLazyLoader(firstIndex);
+    
+    // 测试批量加载便捷函数
+    const batchResult = await loadMultipleCategoriesWithLazyLoader([firstIndex]);
+    
+    // 测试统计函数
+    const stats = getLazyLoaderStats();
+    
+    return {
+      singleLoad: {
+        success: singleResult.success,
+        fromCache: singleResult.fromCache
+      },
+      batchLoad: {
+        size: batchResult.size,
+        success: Array.from(batchResult.values())[0]?.success
+      },
+      stats: {
+        cacheSize: stats.cacheSize,
+        hasOptions: !!stats.options
+      }
+    };
+  }),
+
+  // 测试8: 缓存清理测试
+  await runTest('缓存清理测试', async () => {
+    const statsBefore = lazyLoader.getCacheStats();
+    
+    // 清理过期缓存
+    const cleanedCount = lazyLoader.cleanExpiredCache();
+    
+    // 清空所有缓存
+    lazyLoader.clearCache();
+    
+    const statsAfter = lazyLoader.getCacheStats();
+    
+    return {
+      cacheSizeBefore: statsBefore.cacheSize,
+      cleanedCount,
+      cacheSizeAfter: statsAfter.cacheSize,
+      clearWorking: statsAfter.cacheSize === 0
+    };
+  })
+];
+
+const successCount = testResults.filter(r => r.success).length;
+const totalTests = testResults.length;
+const successRate = (successCount / totalTests * 100).toFixed(1);
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LazyLoader组件测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      color: #2c3e50;
+      margin: 0 0 10px 0;
+    }
+    
+    .header .subtitle {
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+    
+    .summary {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .summary-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+    
+    .summary-item.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .summary-item.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .summary-item.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .summary-item .value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .summary-item .label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-results {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .test-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .test-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-header.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .test-header.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .test-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .test-duration {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-content {
+      padding: 20px;
+    }
+    
+    .test-details {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    
+    .test-details pre {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #dc3545;
+    }
+    
+    .refresh-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    
+    .refresh-btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🧪 LazyLoader组件测试</h1>
+    <div class="subtitle">Week 3 - 任务1.2验证 | 测试时间: {new Date().toLocaleString()}</div>
+  </div>
+
+  <div class="summary">
+    <div class={`summary-item ${successRate === '100.0' ? 'success' : successRate === '0.0' ? 'error' : 'warning'}`}>
+      <div class="value">{successRate}%</div>
+      <div class="label">成功率</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{successCount}</div>
+      <div class="label">成功测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests - successCount}</div>
+      <div class="label">失败测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests}</div>
+      <div class="label">总测试数</div>
+    </div>
+  </div>
+
+  <div class="test-results">
+    {testResults.map((result, index) => (
+      <div class="test-card">
+        <div class={`test-header ${result.success ? 'success' : 'error'}`}>
+          <div class="test-name">
+            <span>{result.success ? '✅' : '❌'}</span>
+            测试 {index + 1}: {result.name}
+          </div>
+          <div class="test-duration">{result.duration.toFixed(2)}ms</div>
+        </div>
+        <div class="test-content">
+          <div class="test-details">
+            <strong>测试详情:</strong>
+            <pre>{JSON.stringify(result.details, null, 2)}</pre>
+          </div>
+          {result.error && (
+            <div class="error-message">
+              <strong>错误信息:</strong> {result.error}
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div style="text-align: center;">
+    <button class="refresh-btn" onclick="window.location.reload()">
+      🔄 重新测试
+    </button>
+  </div>
+
+  <script define:vars={{ testResults }}>
+    console.log('🧪 LazyLoader组件测试页面已加载');
+    console.log('📊 测试结果:', JSON.stringify(testResults, null, 2));
+  </script>
+</body>
+</html>

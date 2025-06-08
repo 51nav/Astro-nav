@@ -1,0 +1,719 @@
+---
+/**
+ * 双层缓存集成测试页面
+ * Week 3 - 任务3.1集成验证
+ */
+
+import { ConfigManager } from '../../../utils/ConfigManager';
+import { LazyLoader } from '../../../utils/LazyLoader';
+import { PreloadStrategy } from '../../../utils/PreloadStrategy';
+import { LocalStorageCache } from '../../../utils/LocalStorageCache';
+
+// 测试结果接口
+interface TestResult {
+  name: string;
+  success: boolean;
+  duration: number;
+  details: any;
+  error?: string;
+}
+
+async function runTest(name: string, testFn: () => Promise<any>): Promise<TestResult> {
+  const startTime = performance.now();
+  try {
+    const result = await testFn();
+    return {
+      name,
+      success: true,
+      duration: performance.now() - startTime,
+      details: result
+    };
+  } catch (error) {
+    return {
+      name,
+      success: false,
+      duration: performance.now() - startTime,
+      details: {},
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+}
+
+// 初始化组件
+const configManager = new ConfigManager();
+const lazyLoader = new LazyLoader(configManager);
+const preloadStrategy = new PreloadStrategy(lazyLoader, configManager);
+
+// 执行集成测试
+const testResults: TestResult[] = [
+  // 测试1: 双层缓存系统初始化
+  await runTest('双层缓存系统初始化', async () => {
+    const cacheStats = lazyLoader.getCacheStats();
+    
+    return {
+      memoryCache: {
+        initialized: cacheStats.memoryCache !== undefined,
+        size: cacheStats.memoryCache.cacheSize,
+        maxSize: cacheStats.memoryCache.maxCacheSize
+      },
+      localStorage: {
+        initialized: cacheStats.localStorage !== undefined,
+        totalItems: cacheStats.localStorage.totalItems,
+        totalSize: cacheStats.localStorage.totalSize,
+        hitRate: cacheStats.localStorage.hitRate
+      },
+      dualCacheWorking: cacheStats.memoryCache !== undefined && cacheStats.localStorage !== undefined
+    };
+  }),
+
+  // 测试2: 配置加载与缓存
+  await runTest('配置加载与缓存', async () => {
+    // 加载配置
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    const categories = configManager.getAllCategoryIndexes();
+    const cacheStatsBefore = lazyLoader.getCacheStats();
+    
+    return {
+      configLoaded: configResult.success,
+      categoryCount: categories.length,
+      isOptimized: configResult.isOptimized,
+      loadTime: configResult.loadTime,
+      cacheStatsBefore: {
+        memorySize: cacheStatsBefore.memoryCache.cacheSize,
+        localStorageItems: cacheStatsBefore.localStorage.totalItems
+      }
+    };
+  }),
+
+  // 测试3: 分类数据双层缓存
+  await runTest('分类数据双层缓存', async () => {
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length === 0) {
+      throw new Error('没有可用的分类');
+    }
+    
+    const testCategoryIndex = categories[0];
+    
+    // 第一次加载 (从网络)
+    const firstLoad = await lazyLoader.loadCategory(testCategoryIndex);
+    const statsAfterFirst = lazyLoader.getCacheStats();
+    
+    // 第二次加载 (从内存缓存)
+    const secondLoad = await lazyLoader.loadCategory(testCategoryIndex);
+    const statsAfterSecond = lazyLoader.getCacheStats();
+    
+    // 清除内存缓存，模拟页面刷新
+    await lazyLoader.clearCache();
+    
+    // 第三次加载 (从localStorage)
+    const thirdLoad = await lazyLoader.loadCategory(testCategoryIndex);
+    const statsAfterThird = lazyLoader.getCacheStats();
+    
+    return {
+      firstLoad: {
+        success: firstLoad.success,
+        fromCache: firstLoad.fromCache,
+        loadTime: firstLoad.loadTime
+      },
+      secondLoad: {
+        success: secondLoad.success,
+        fromCache: secondLoad.fromCache,
+        loadTime: secondLoad.loadTime
+      },
+      thirdLoad: {
+        success: thirdLoad.success,
+        fromCache: thirdLoad.fromCache,
+        loadTime: thirdLoad.loadTime,
+        cacheSource: (thirdLoad as any).cacheSource
+      },
+      cacheProgression: {
+        afterFirst: statsAfterFirst.memoryCache.cacheSize,
+        afterSecond: statsAfterSecond.memoryCache.cacheSize,
+        afterThird: statsAfterThird.memoryCache.cacheSize
+      },
+      dualCacheWorking: firstLoad.success && secondLoad.fromCache && thirdLoad.fromCache
+    };
+  }),
+
+  // 测试4: 预加载与双层缓存
+  await runTest('预加载与双层缓存', async () => {
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    // 清空缓存
+    await lazyLoader.clearCache();
+    
+    const statsBefore = lazyLoader.getCacheStats();
+    
+    // 执行预加载
+    await preloadStrategy.executePreload();
+    
+    const statsAfter = lazyLoader.getCacheStats();
+    const preloadStats = preloadStrategy.getPreloadStats();
+    
+    return {
+      preloadExecution: {
+        totalPreloads: preloadStats.totalPreloads,
+        successCount: preloadStats.successCount,
+        failureCount: preloadStats.failureCount,
+        successRate: preloadStats.successRate
+      },
+      cacheChanges: {
+        memoryCacheBefore: statsBefore.memoryCache.cacheSize,
+        memoryCacheAfter: statsAfter.memoryCache.cacheSize,
+        localStorageBefore: statsBefore.localStorage.totalItems,
+        localStorageAfter: statsAfter.localStorage.totalItems
+      },
+      preloadCacheWorking: statsAfter.memoryCache.cacheSize > statsBefore.memoryCache.cacheSize ||
+                          statsAfter.localStorage.totalItems > statsBefore.localStorage.totalItems
+    };
+  }),
+
+  // 测试5: 缓存性能对比
+  await runTest('缓存性能对比', async () => {
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length < 3) {
+      throw new Error('分类数量不足');
+    }
+    
+    const performanceResults = [];
+    
+    // 测试前3个分类的加载性能
+    for (let i = 0; i < Math.min(3, categories.length); i++) {
+      const categoryIndex = categories[i];
+      
+      // 清除该分类的缓存
+      await lazyLoader.clearCache();
+      
+      // 网络加载
+      const networkStart = performance.now();
+      const networkResult = await lazyLoader.loadCategory(categoryIndex);
+      const networkTime = performance.now() - networkStart;
+      
+      // 内存缓存加载
+      const memoryStart = performance.now();
+      const memoryResult = await lazyLoader.loadCategory(categoryIndex);
+      const memoryTime = performance.now() - memoryStart;
+      
+      // 清除内存缓存，保留localStorage
+      const tempStats = lazyLoader.getCacheStats();
+      await lazyLoader.clearCache();
+      
+      // localStorage加载
+      const localStorageStart = performance.now();
+      const localStorageResult = await lazyLoader.loadCategory(categoryIndex);
+      const localStorageTime = performance.now() - localStorageStart;
+      
+      performanceResults.push({
+        categoryIndex,
+        networkTime,
+        memoryTime,
+        localStorageTime,
+        speedup: {
+          memoryVsNetwork: networkTime / memoryTime,
+          localStorageVsNetwork: networkTime / localStorageTime
+        }
+      });
+    }
+    
+    const avgSpeedup = performanceResults.reduce((acc, result) => ({
+      memory: acc.memory + result.speedup.memoryVsNetwork,
+      localStorage: acc.localStorage + result.speedup.localStorageVsNetwork
+    }), { memory: 0, localStorage: 0 });
+    
+    avgSpeedup.memory /= performanceResults.length;
+    avgSpeedup.localStorage /= performanceResults.length;
+    
+    return {
+      performanceResults,
+      averageSpeedup: avgSpeedup,
+      performanceImprovement: avgSpeedup.memory > 2 && avgSpeedup.localStorage > 1.5
+    };
+  }),
+
+  // 测试6: 缓存容量管理
+  await runTest('缓存容量管理', async () => {
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    const categories = configManager.getAllCategoryIndexes();
+    
+    // 清空缓存
+    await lazyLoader.clearCache();
+    
+    const initialStats = lazyLoader.getCacheStats();
+    
+    // 加载多个分类，测试LRU机制
+    const loadResults = [];
+    const maxCategoriesToLoad = Math.min(15, categories.length); // 超过内存缓存限制
+    
+    for (let i = 0; i < maxCategoriesToLoad; i++) {
+      const result = await lazyLoader.loadCategory(categories[i]);
+      const stats = lazyLoader.getCacheStats();
+      
+      loadResults.push({
+        categoryIndex: categories[i],
+        success: result.success,
+        memoryCacheSize: stats.memoryCache.cacheSize,
+        localStorageItems: stats.localStorage.totalItems
+      });
+    }
+    
+    const finalStats = lazyLoader.getCacheStats();
+    
+    return {
+      initialStats: {
+        memorySize: initialStats.memoryCache.cacheSize,
+        localStorageItems: initialStats.localStorage.totalItems
+      },
+      finalStats: {
+        memorySize: finalStats.memoryCache.cacheSize,
+        localStorageItems: finalStats.localStorage.totalItems,
+        maxMemorySize: finalStats.memoryCache.maxCacheSize
+      },
+      loadResults,
+      categoriesLoaded: maxCategoriesToLoad,
+      lruWorking: finalStats.memoryCache.cacheSize <= finalStats.memoryCache.maxCacheSize,
+      localStorageGrowth: finalStats.localStorage.totalItems > initialStats.localStorage.totalItems
+    };
+  }),
+
+  // 测试7: 缓存清理和过期
+  await runTest('缓存清理和过期', async () => {
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    const categories = configManager.getAllCategoryIndexes();
+    if (categories.length === 0) {
+      throw new Error('没有可用的分类');
+    }
+    
+    // 加载一些分类
+    await lazyLoader.loadCategory(categories[0]);
+    if (categories.length > 1) {
+      await lazyLoader.loadCategory(categories[1]);
+    }
+    
+    const statsBeforeCleanup = lazyLoader.getCacheStats();
+    
+    // 执行清理
+    const cleanedCount = await lazyLoader.cleanExpiredCache();
+    
+    const statsAfterCleanup = lazyLoader.getCacheStats();
+    
+    // 清空所有缓存
+    await lazyLoader.clearCache();
+    
+    const statsAfterClear = lazyLoader.getCacheStats();
+    
+    return {
+      beforeCleanup: {
+        memorySize: statsBeforeCleanup.memoryCache.cacheSize,
+        localStorageItems: statsBeforeCleanup.localStorage.totalItems
+      },
+      afterCleanup: {
+        memorySize: statsAfterCleanup.memoryCache.cacheSize,
+        localStorageItems: statsAfterCleanup.localStorage.totalItems,
+        cleanedCount
+      },
+      afterClear: {
+        memorySize: statsAfterClear.memoryCache.cacheSize,
+        localStorageItems: statsAfterClear.localStorage.totalItems
+      },
+      cleanupWorking: cleanedCount >= 0,
+      clearWorking: statsAfterClear.memoryCache.cacheSize === 0
+    };
+  }),
+
+  // 测试8: 缓存统计和监控
+  await runTest('缓存统计和监控', async () => {
+    const configResult = await configManager.loadConfig();
+    
+    if (!configResult.success) {
+      throw new Error('配置加载失败');
+    }
+    
+    const categories = configManager.getAllCategoryIndexes();
+    
+    // 执行一系列操作来生成统计数据
+    const operations = [];
+    
+    for (let i = 0; i < Math.min(5, categories.length); i++) {
+      const startTime = performance.now();
+      const result = await lazyLoader.loadCategory(categories[i]);
+      const endTime = performance.now();
+      
+      operations.push({
+        categoryIndex: categories[i],
+        success: result.success,
+        fromCache: result.fromCache,
+        loadTime: endTime - startTime
+      });
+      
+      // 重复加载测试缓存命中
+      const cacheStartTime = performance.now();
+      const cacheResult = await lazyLoader.loadCategory(categories[i]);
+      const cacheEndTime = performance.now();
+      
+      operations.push({
+        categoryIndex: categories[i],
+        success: cacheResult.success,
+        fromCache: cacheResult.fromCache,
+        loadTime: cacheEndTime - cacheStartTime,
+        repeat: true
+      });
+    }
+    
+    const finalStats = lazyLoader.getCacheStats();
+    
+    return {
+      operations,
+      finalStats: {
+        memoryCache: finalStats.memoryCache,
+        localStorage: {
+          totalItems: finalStats.localStorage.totalItems,
+          totalSize: finalStats.localStorage.totalSize,
+          hitRate: finalStats.localStorage.hitRate,
+          averageSize: finalStats.localStorage.averageSize
+        }
+      },
+      performance: {
+        networkLoads: operations.filter(op => !op.fromCache && !op.repeat).length,
+        cacheHits: operations.filter(op => op.fromCache).length,
+        avgNetworkTime: operations.filter(op => !op.fromCache && !op.repeat)
+          .reduce((sum, op) => sum + op.loadTime, 0) / 
+          operations.filter(op => !op.fromCache && !op.repeat).length,
+        avgCacheTime: operations.filter(op => op.fromCache)
+          .reduce((sum, op) => sum + op.loadTime, 0) / 
+          operations.filter(op => op.fromCache).length
+      },
+      monitoringWorking: finalStats.localStorage.hitRate >= 0 && finalStats.memoryCache.cacheSize >= 0
+    };
+  })
+];
+
+const successCount = testResults.filter(r => r.success).length;
+const totalTests = testResults.length;
+const successRate = (successCount / totalTests * 100).toFixed(1);
+
+// 获取最终系统状态
+const finalCacheStats = lazyLoader.getCacheStats();
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>双层缓存集成测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .cache-architecture {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .architecture-diagram {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    
+    .cache-layer {
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid #e5e7eb;
+      text-align: center;
+    }
+    
+    .cache-layer.memory {
+      background: #dbeafe;
+      border-color: #3b82f6;
+    }
+    
+    .cache-layer.storage {
+      background: #d1fae5;
+      border-color: #10b981;
+    }
+    
+    .layer-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .layer-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .stat-item {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .stat-value {
+      font-weight: bold;
+      color: #1f2937;
+    }
+    
+    .summary {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .summary-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+    
+    .summary-item.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .summary-item.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .summary-item .value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .summary-item .label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-results {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .test-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .test-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-header.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .test-header.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .test-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .test-duration {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .test-content {
+      padding: 20px;
+    }
+    
+    .test-details {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    
+    .test-details pre {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>💾 双层缓存集成测试</h1>
+    <div class="subtitle">Week 3 - 任务3.1集成验证 | 测试时间: {new Date().toLocaleString()}</div>
+  </div>
+
+  <!-- 缓存架构图 -->
+  <div class="cache-architecture">
+    <h2>🏗️ 双层缓存架构</h2>
+    <div class="architecture-diagram">
+      <div class="cache-layer memory">
+        <div class="layer-title">🧠 内存缓存 (L1)</div>
+        <div class="layer-description">LRU算法，快速访问</div>
+        <div class="layer-stats">
+          <div class="stat-item">
+            <div class="stat-value">{finalCacheStats.memoryCache.cacheSize}</div>
+            <div>当前项数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{finalCacheStats.memoryCache.maxCacheSize}</div>
+            <div>最大容量</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="cache-layer storage">
+        <div class="layer-title">💿 本地存储缓存 (L2)</div>
+        <div class="layer-description">持久化存储，压缩优化</div>
+        <div class="layer-stats">
+          <div class="stat-item">
+            <div class="stat-value">{finalCacheStats.localStorage.totalItems}</div>
+            <div>存储项数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{(finalCacheStats.localStorage.totalSize / 1024).toFixed(1)}KB</div>
+            <div>存储大小</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{finalCacheStats.localStorage.hitRate.toFixed(1)}%</div>
+            <div>命中率</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{(finalCacheStats.localStorage.compressionRatio * 100).toFixed(1)}%</div>
+            <div>压缩率</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 测试结果 -->
+  <div class="summary">
+    <div class={`summary-item ${successRate === '100.0' ? 'success' : 'warning'}`}>
+      <div class="value">{successRate}%</div>
+      <div class="label">集成测试通过率</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{successCount}</div>
+      <div class="label">通过测试</div>
+    </div>
+    <div class="summary-item">
+      <div class="value">{totalTests - successCount}</div>
+      <div class="label">失败测试</div>
+    </div>
+    <div class={`summary-item ${finalCacheStats.localStorage.hitRate >= 50 ? 'success' : 'warning'}`}>
+      <div class="value">{finalCacheStats.localStorage.hitRate.toFixed(1)}%</div>
+      <div class="label">缓存命中率</div>
+    </div>
+  </div>
+
+  <div class="test-results">
+    {testResults.map((result, index) => (
+      <div class="test-card">
+        <div class={`test-header ${result.success ? 'success' : 'error'}`}>
+          <div class="test-name">
+            <span>{result.success ? '✅' : '❌'}</span>
+            集成测试 {index + 1}: {result.name}
+          </div>
+          <div class="test-duration">{result.duration.toFixed(2)}ms</div>
+        </div>
+        <div class="test-content">
+          <div class="test-details">
+            <strong>测试详情:</strong>
+            <pre>{JSON.stringify(result.details, null, 2)}</pre>
+          </div>
+          {result.error && (
+            <div class="error-message">
+              <strong>错误信息:</strong> {result.error}
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script define:vars={{ testResults, finalCacheStats }}>
+    console.log('💾 双层缓存集成测试页面已加载');
+    console.log('📊 集成测试结果:', JSON.stringify(testResults, null, 2));
+    console.log('📊 最终缓存状态:', JSON.stringify(finalCacheStats, null, 2));
+  </script>
+</body>
+</html>

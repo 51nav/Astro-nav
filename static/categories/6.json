@@ -1,0 +1,54 @@
+{
+  "categoryId": 6,
+  "categoryName": "搜索流量",
+  "sites": [
+    {
+      "title": "Google Ads",
+      "description": "最大的搜索广告平台",
+      "url": "https://ads.google.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Bing Ads",
+      "description": "微软的搜索广告平台",
+      "url": "https://ads.microsoft.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Yandex.Direct",
+      "description": "俄罗斯最大的搜索广告平台",
+      "url": "https://direct.yandex.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

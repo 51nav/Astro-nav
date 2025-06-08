@@ -1,0 +1,54 @@
+{
+  "categoryId": 15,
+  "categoryName": "域名注册",
+  "sites": [
+    {
+      "title": "Dynadot",
+      "description": "对国人友好，支持支付宝，价格一般",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Namecheap",
+      "description": "域名注册并不便宜，网站UI反应很慢，直接���问速度更慢",
+      "url": "https://namecheap.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Godaddy",
+      "description": "戏称'狗爹', 全球排名第一的域名注册商",
+      "url": "https://godaddy.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

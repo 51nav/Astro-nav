@@ -1,0 +1,54 @@
+{
+  "categoryId": 20,
+  "categoryName": "落地页工具",
+  "sites": [
+    {
+      "title": "Instapage",
+      "description": "制作落地页的利器",
+      "url": "https://instapage.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Unbounce",
+      "description": "专业的落地页制作工具",
+      "url": "https://unbounce.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Leadpages",
+      "description": "简单易用的落地页工具",
+      "url": "https://leadpages.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

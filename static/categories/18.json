@@ -1,0 +1,54 @@
+{
+  "categoryId": 18,
+  "categoryName": "支付服务",
+  "sites": [
+    {
+      "title": "Paxum",
+      "description": "Affiliate最常用的支付工具之一",
+      "url": "https://paxum.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Payoneer",
+      "description": "以色列支付工具，对中国友好",
+      "url": "https://payoneer.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Wise",
+      "description": "原TransferWise，跨境支付利器",
+      "url": "https://wise.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

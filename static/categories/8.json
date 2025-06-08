@@ -1,0 +1,54 @@
+{
+  "categoryId": 8,
+  "categoryName": "综合性联盟",
+  "sites": [
+    {
+      "title": "Rakuten Advertising",
+      "description": "各种牛逼广告主聚集的地方",
+      "url": "https://rakutenadvertising.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "CJ Affiliate",
+      "description": "大名鼎鼎的CJ, 世界最大的营销联盟",
+      "url": "https://cj.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Shareasale",
+      "description": "美国小型广告主聚集的公司，值得加入",
+      "url": "https://shareasale.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

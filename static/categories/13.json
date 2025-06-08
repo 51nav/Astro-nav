@@ -1,0 +1,54 @@
+{
+  "categoryId": 13,
+  "categoryName": "电商平台",
+  "sites": [
+    {
+      "title": "eBay Partner Network",
+      "description": "eBay也有自己的销售联盟噢",
+      "url": "#",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "eBay",
+      "description": "电商鼻祖",
+      "url": "https://ebay.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Shopify",
+      "description": "各种大牛的聚集地",
+      "url": "https://shopify.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

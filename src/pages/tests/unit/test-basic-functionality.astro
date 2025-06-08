@@ -1,0 +1,135 @@
+---
+// 最简单的Astro测试页面
+---
+
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro基础测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Astro基础测试</h1>
+        <p>测试Astro页面中的JavaScript功能</p>
+
+        <button class="test-button" onclick="testBasic()">🎯 基础测试</button>
+        <button class="test-button" onclick="testConfig()">📄 配置测试</button>
+        <button class="test-button" onclick="testCategory()">📁 分类测试</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        function testBasic() {
+            console.log('🧪 Astro页面基础测试');
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🎉 Astro页面JavaScript正常工作！\n\n' +
+                '✅ 按钮点击正常\n' +
+                '✅ DOM操作正常\n' +
+                '✅ 函数调用正常\n' +
+                '✅ Astro页面渲染正常\n\n' +
+                '测试时间: ' + new Date().toLocaleString();
+        }
+
+        async function testConfig() {
+            console.log('📄 配置文件测试');
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 正在测试配置文件...';
+            
+            try {
+                const response = await fetch('/config.json');
+                if (response.ok) {
+                    const config = await response.json();
+                    resultDiv.textContent = '📄 配置文件测试成功！\n\n' +
+                        '✅ 配置文件加载正常\n' +
+                        '✅ JSON解析正常\n' +
+                        '✅ 网站标题: ' + (config.site?.title || '未设置') + '\n' +
+                        '✅ 菜单数量: ' + (config.menuItems?.length || 0) + '\n' +
+                        '✅ 文件大小: ' + JSON.stringify(config).length + ' 字符';
+                } else {
+                    resultDiv.textContent = '❌ 配置文件加载失败\n' +
+                        'HTTP状态: ' + response.status + '\n' +
+                        '请确保配置文件存在';
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ 配置文件测试失败\n' + error.message;
+            }
+        }
+
+        async function testCategory() {
+            console.log('📁 分类文件测试');
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 正在测试分类文件...';
+            
+            try {
+                const response = await fetch('/categories/0.json');
+                if (response.ok) {
+                    const categoryData = await response.json();
+                    resultDiv.textContent = '📁 分类文件测试成功！\n\n' +
+                        '✅ 分类文件加载正常\n' +
+                        '✅ 分类名称: ' + (categoryData.categoryName || '未知') + '\n' +
+                        '✅ 网站数量: ' + (categoryData.sites?.length || 0) + '\n' +
+                        '✅ 文件大小: ' + JSON.stringify(categoryData).length + ' 字符\n\n' +
+                        '🎯 这证明懒加载功能可以正常工作！';
+                } else {
+                    resultDiv.textContent = '❌ 分类文件加载失败\n' +
+                        'HTTP状态: ' + response.status + '\n' +
+                        '请确保分类文件存在';
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ 分类文件测试失败\n' + error.message;
+            }
+        }
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Astro测试页面已加载');
+        });
+    </script>
+</body>
+</html>

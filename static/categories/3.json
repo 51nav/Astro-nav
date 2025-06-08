@@ -1,0 +1,70 @@
+{
+  "categoryId": 3,
+  "categoryName": "原生广告流量",
+  "sites": [
+    {
+      "title": "MGID",
+      "description": "全球最大的原生广告网络之一",
+      "url": "https://mgid.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Taboola",
+      "description": "高质量原生广告网络",
+      "url": "https://taboola.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Outbrain",
+      "description": "优质原生广告平台",
+      "url": "https://outbrain.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Outbrain",
+      "description": "优质原生广告平台",
+      "url": "https://outbrain.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "categoryId": 11,
+  "categoryName": "SEO工具",
+  "sites": [
+    {
+      "title": "SEMRush",
+      "description": "搜索引擎优化，关键字研究工具",
+      "url": "https://semrush.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Ahrefs",
+      "description": "竞争对手关键字研究",
+      "url": "https://ahrefs.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Moz",
+      "description": "著名的关键字研究工具",
+      "url": "https://moz.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Neil Patel",
+      "description": "著名的免费关键字研究工具",
+      "url": "https://neilpatel.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    },
+    {
+      "title": "Majestic",
+      "description": "最大的反向链接数据库",
+      "url": "https://majestic.com",
+      "logo": "",
+      "advantages": [],
+      "features": [],
+      "details": {
+        "intro": "",
+        "pricing": "",
+        "pros": [],
+        "cons": [],
+        "tips": []
+      },
+      "related": []
+    }
+  ]
+}

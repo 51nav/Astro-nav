@@ -1,0 +1,375 @@
+---
+/**
+ * LoadingIndicator组件 - Week 3 任务1.3
+ * 支持多种加载样式和尺寸的加载指示器组件
+ */
+
+export interface Props {
+  /** 是否显示加载状态 */
+  isLoading?: boolean;
+  /** 加载样式类型 */
+  type?: 'spinner' | 'progress' | 'skeleton' | 'dots';
+  /** 组件尺寸 */
+  size?: 'small' | 'medium' | 'large';
+  /** 加载消息 */
+  message?: string;
+  /** 进度百分比 (仅progress类型有效) */
+  progress?: number;
+  /** 自定义CSS类 */
+  className?: string;
+  /** 是否显示在覆盖层上 */
+  overlay?: boolean;
+}
+
+const {
+  isLoading = false,
+  type = 'spinner',
+  size = 'medium',
+  message = '',
+  progress = 0,
+  className = '',
+  overlay = false
+} = Astro.props;
+
+// 如果不需要显示加载状态，直接返回空
+if (!isLoading) {
+  return null;
+}
+
+// 生成CSS类名
+const baseClass = 'loading-indicator';
+const sizeClass = `loading-${size}`;
+const typeClass = `loading-${type}`;
+const overlayClass = overlay ? 'loading-overlay' : '';
+const combinedClass = [baseClass, sizeClass, typeClass, overlayClass, className].filter(Boolean).join(' ');
+
+// 进度百分比限制在0-100之间
+const normalizedProgress = Math.max(0, Math.min(100, progress));
+---
+
+<div class={combinedClass} role="status" aria-live="polite" aria-label={message || '正在加载...'}>
+  {overlay && <div class="loading-backdrop"></div>}
+  
+  <div class="loading-content">
+    {type === 'spinner' && (
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+      </div>
+    )}
+    
+    {type === 'progress' && (
+      <div class="loading-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" style={`width: ${normalizedProgress}%`}></div>
+        </div>
+        <div class="progress-text">{normalizedProgress}%</div>
+      </div>
+    )}
+    
+    {type === 'skeleton' && (
+      <div class="loading-skeleton">
+        <div class="skeleton-line skeleton-line-1"></div>
+        <div class="skeleton-line skeleton-line-2"></div>
+        <div class="skeleton-line skeleton-line-3"></div>
+      </div>
+    )}
+    
+    {type === 'dots' && (
+      <div class="loading-dots">
+        <div class="dot dot-1"></div>
+        <div class="dot dot-2"></div>
+        <div class="dot dot-3"></div>
+      </div>
+    )}
+    
+    {message && (
+      <div class="loading-message">{message}</div>
+    )}
+  </div>
+</div>
+
+<style>
+  /* 基础样式 */
+  .loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .loading-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+  }
+  
+  .loading-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  /* 尺寸变体 */
+  .loading-small .loading-content {
+    gap: 8px;
+  }
+  
+  .loading-large .loading-content {
+    gap: 16px;
+  }
+  
+  /* Spinner样式 */
+  .loading-spinner {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .loading-small .loading-spinner {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .loading-medium .loading-spinner {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .loading-large .loading-spinner {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .spinner-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  
+  .spinner-ring:nth-child(1) { animation-delay: -0.45s; }
+  .spinner-ring:nth-child(2) { animation-delay: -0.3s; }
+  .spinner-ring:nth-child(3) { animation-delay: -0.15s; }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Progress样式 */
+  .loading-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .progress-bar {
+    width: 200px;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .loading-small .progress-bar {
+    width: 120px;
+    height: 6px;
+  }
+  
+  .loading-large .progress-bar {
+    width: 300px;
+    height: 12px;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    animation: progress-shimmer 2s infinite;
+  }
+  
+  @keyframes progress-shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+  }
+  
+  .progress-text {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .loading-small .progress-text {
+    font-size: 12px;
+  }
+  
+  .loading-large .progress-text {
+    font-size: 16px;
+  }
+  
+  /* Skeleton样式 */
+  .loading-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: skeleton-loading 1.5s infinite;
+  }
+  
+  .skeleton-line-1 { width: 100%; }
+  .skeleton-line-2 { width: 80%; }
+  .skeleton-line-3 { width: 60%; }
+  
+  .loading-small .skeleton-line {
+    height: 12px;
+  }
+  
+  .loading-large .skeleton-line {
+    height: 20px;
+  }
+  
+  @keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  /* Dots样式 */
+  .loading-dots {
+    display: flex;
+    gap: 4px;
+  }
+  
+  .dot {
+    width: 8px;
+    height: 8px;
+    background: #3b82f6;
+    border-radius: 50%;
+    animation: dot-bounce 1.4s infinite ease-in-out both;
+  }
+  
+  .loading-small .dot {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .loading-large .dot {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .dot-1 { animation-delay: -0.32s; }
+  .dot-2 { animation-delay: -0.16s; }
+  .dot-3 { animation-delay: 0s; }
+  
+  @keyframes dot-bounce {
+    0%, 80%, 100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1);
+    }
+  }
+  
+  /* 消息样式 */
+  .loading-message {
+    font-size: 14px;
+    color: #6b7280;
+    text-align: center;
+    max-width: 200px;
+  }
+  
+  .loading-small .loading-message {
+    font-size: 12px;
+    max-width: 150px;
+  }
+  
+  .loading-large .loading-message {
+    font-size: 16px;
+    max-width: 300px;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .loading-overlay .loading-content {
+      padding: 20px;
+    }
+    
+    .progress-bar {
+      width: 150px;
+    }
+    
+    .loading-message {
+      font-size: 13px;
+      max-width: 180px;
+    }
+  }
+  
+  /* 深色模式支持 */
+  @media (prefers-color-scheme: dark) {
+    .loading-backdrop {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .progress-bar {
+      background: #374151;
+    }
+    
+    .loading-message,
+    .progress-text {
+      color: #d1d5db;
+    }
+    
+    .skeleton-line {
+      background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+      background-size: 200% 100%;
+    }
+  }
+  
+  /* 无障碍支持 */
+  @media (prefers-reduced-motion: reduce) {
+    .spinner-ring,
+    .progress-fill,
+    .skeleton-line,
+    .dot {
+      animation: none;
+    }
+    
+    .progress-fill {
+      background: #3b82f6;
+    }
+  }
+</style>
