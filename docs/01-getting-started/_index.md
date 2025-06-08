@@ -1,3 +1,16 @@
+---
+linkTitle: "快速开始"
+type: "docs"
+category: "01-getting-started"
+order: 1
+icon: "🚀"
+description: "项目快速开始指南"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 🚀 快速开始
 
 ## 📂 目录内容

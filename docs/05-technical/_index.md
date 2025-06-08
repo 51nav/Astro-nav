@@ -1,3 +1,16 @@
+---
+linkTitle: "技术规范"
+type: "docs"
+category: "05-technical"
+order: 5
+icon: "🔬"
+description: "技术规范、API和标准文档"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 🔬 技术规范
 
 ## 📂 目录内容

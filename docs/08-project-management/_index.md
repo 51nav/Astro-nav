@@ -1,3 +1,16 @@
+---
+linkTitle: "项目管理"
+type: "docs"
+category: "08-project-management"
+order: 8
+icon: "📊"
+description: "项目管理、规划和进度文档"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 📊 项目管理
 
 ## 📂 目录内容

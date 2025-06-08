@@ -1,3 +1,16 @@
+---
+linkTitle: "开发文档"
+type: "docs"
+category: "03-development"
+order: 3
+icon: "🔧"
+description: "开发环境、规范和架构文档"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 🔧 开发文档
 
 ## 📂 目录内容

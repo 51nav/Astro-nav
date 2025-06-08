@@ -1,3 +1,16 @@
+---
+linkTitle: "部署文档"
+type: "docs"
+category: "06-deployment"
+order: 6
+icon: "🚀"
+description: "部署指南和运维文档"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 🚀 部署文档
 
 ## 📂 目录内容

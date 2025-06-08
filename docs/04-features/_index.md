@@ -1,3 +1,16 @@
+---
+linkTitle: "功能文档"
+type: "docs"
+category: "04-features"
+order: 4
+icon: "✨"
+description: "功能设计、实现和说明文档"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # ✨ 功能文档
 
 ## 📂 目录内容

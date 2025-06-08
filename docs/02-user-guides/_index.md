@@ -1,3 +1,16 @@
+---
+linkTitle: "用户指南"
+type: "docs"
+category: "02-user-guides"
+order: 2
+icon: "👥"
+description: "用户操作指南和配置说明"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 👥 用户指南
 
 ## 📂 目录内容

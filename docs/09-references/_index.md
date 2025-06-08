@@ -1,3 +1,16 @@
+---
+linkTitle: "参考资料"
+type: "docs"
+category: "09-references"
+order: 9
+icon: "📖"
+description: "参考资料、规范和最佳实践"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 📖 参考资料
 
 ## 📂 目录内容

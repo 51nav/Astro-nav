@@ -1,3 +1,16 @@
+---
+linkTitle: "设计文档"
+type: "docs"
+category: "07-design"
+order: 7
+icon: "🎨"
+description: "系统设计和架构文档"
+cascade:
+  - type: docs
+  - show_breadcrumb: true
+  - show_toc: false
+---
+
 # 🎨 设计文档
 
 ## 📂 目录内容
