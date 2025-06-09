@@ -18,6 +18,7 @@ cascade:
 - [📖 design-overview.md](design-overview.md) - 设计概览
 - [🏗️ system-design.md](system-design.md) - 系统设计
 - [🎯 market-intelligence-integration.md](market-intelligence-integration.md) - 市场情报分析模块集成设计
+- [🔍 builtwith-hunter-integration.md](builtwith-hunter-integration.md) - BuiltWith + Hunter + Whois 集成方案
 
 > ⚠️ **注意**: 以下文档计划中，尚未创建
 > - [🎨 ui-ux-design.md](ui-ux-design.md) - UI/UX设计
